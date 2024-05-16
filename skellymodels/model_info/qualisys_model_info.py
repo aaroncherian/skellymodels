@@ -1,14 +1,5 @@
 from typing import Dict, List, Optional
-
-
-class ModelInfo(dict):
-    landmark_names: List[str]
-    num_tracked_points: int
-    tracked_object_names: Optional[list] = None
-    virtual_markers_definitions: Optional[Dict[str, Dict[str, List[str | float]]]] = None
-    segment_connections: Optional[Dict[str, Dict[str, str]]] = None
-    center_of_mass_definitions: Optional[Dict[str, Dict[str, float]]] = None
-    joint_hierarchy: Optional[Dict[str, List[str]]] = None
+from skellymodels.model_info.model_info import ModelInfo
 
 
 class QualisysModelInfo(ModelInfo):
@@ -127,3 +118,35 @@ class QualisysModelInfo(ModelInfo):
             "segment_com_percentage": 0.0145,
         },
     }
+
+
+class QualisysMDN_NIHModelInfo(QualisysModelInfo):
+    landmark_names = [
+    'head',
+    'left_ear',
+    'right_ear',
+    'cspine',
+    'left_shoulder',
+    'right_shoulder',
+    'left_elbow',
+    'right_elbow',
+    'left_wrist',
+    'right_wrist',
+    'left_hand',
+    'right_hand',
+    'left_hip',
+    'right_hip',
+    'left_knee',
+    'right_knee',
+    'left_ankle',
+    'right_ankle',
+    'left_heel',
+    'right_heel',
+    'left_foot_index',
+    'right_foot_index',
+    ] 
+    
+    num_tracked_points = len(landmark_names)
+    tracked_object_names = ['pose_landmarks']
+
+
