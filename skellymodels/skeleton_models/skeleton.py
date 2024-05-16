@@ -131,3 +131,21 @@ class Skeleton(BaseModel):
     @property
     def trajectories(self) -> Dict[str, np.ndarray]:
         return self.marker_data
+    
+    @property
+    def marker_names(self) -> List[str]:
+        return self.markers.all_markers
+    
+    @property
+    def original_marker_names(self) -> List[str]:
+        return self.markers.original_marker_names
+    
+    @property
+    def virtual_marker_names(self) -> List[str]:
+        try:
+            return list(self.markers.virtual_marker_definition.virtual_markers.keys())
+        except AttributeError:
+            print('Virtual marker names are not available. No virtual markers are defined.')
+            return []
+
+    
