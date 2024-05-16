@@ -4,8 +4,8 @@ from pydantic import BaseModel, ConfigDict
 import numpy as np
 
 
-from freemocap.data_layer.skeleton_models.marker_info import MarkerInfo
-from freemocap.data_layer.skeleton_models.segments import Segment, Segments, SegmentAnthropometry
+from skellymodels.skeleton_models.marker_info import MarkerInfo
+from skellymodels.skeleton_models.segments import Segment, Segments, SegmentAnthropometry
 
 logger = logging.getLogger(__name__)
 

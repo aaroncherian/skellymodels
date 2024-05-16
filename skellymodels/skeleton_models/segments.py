@@ -1,7 +1,7 @@
 from typing import Dict
 from pydantic import BaseModel, root_validator
 
-from freemocap.data_layer.skeleton_models.marker_info import MarkerInfo
+from skellymodels.skeleton_models.marker_info import MarkerInfo
 
 
 class Segment(BaseModel):
