@@ -129,6 +129,30 @@ class Skeleton(BaseModel):
         return {"proximal": proximal_trajectories, "distal": distal_trajectories}
 
     @property
+    def marker_data_as_numpy(self) -> np.ndarray:
+        """
+        Converts the marker data dictionary to a NumPy array in (frame, marker, dimension) format.
+
+        Returns:
+        - A NumPy array with dimensions (num_frames, num_markers, 3).
+        """
+        if not self.marker_data:
+            raise ValueError("Marker data is empty. Please integrate 3D data first using `integrate_freemocap_3d_data()`.")
+
+        marker_names = self.marker_names
+        num_frames = self.num_frames
+        num_markers = len(marker_names)
+
+        # Create an empty array to hold the marker data
+        data_array = np.zeros((num_frames, num_markers, 3))
+
+        # Fill the array with marker data
+        for i, marker_name in enumerate(marker_names):
+            data_array[:, i, :] = self.marker_data[marker_name]
+
+        return data_array
+
+    @property
     def trajectories(self) -> Dict[str, np.ndarray]:
         return self.marker_data
     
