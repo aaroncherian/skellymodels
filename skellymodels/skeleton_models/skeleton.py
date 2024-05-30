@@ -11,8 +11,10 @@ class Skeleton(BaseModel):
     markers: MarkerInfo
     num_tracked_points: int
     segments: Optional[Dict[str, Segment]] = None
-    original_marker_data: Dict[str, np.ndarray] = {}
-    virtual_marker_data: Dict[str, np.ndarray] = {}
+    # original_marker_data: Dict[str, np.ndarray] = {}
+    # virtual_marker_data: Dict[str, np.ndarray] = {}
+    _marker_data: Dict[str, np.ndarray] = {}
+    rigid_marker_data: Dict[str, np.ndarray] = {}
     joint_hierarchy: Optional[Dict[str, List[str]]] = None
     center_of_mass_definitions: Optional[Dict[str, SegmentAnthropometry]] = None
     num_frames: Optional[int] = None
@@ -81,11 +83,9 @@ class Skeleton(BaseModel):
                 f"the expected number of tracked points ({self.num_tracked_points})."
             )
 
-        self.original_marker_data = {
+        self._marker_data = {
             marker_name: freemocap_3d_data[:, i, :] for i, marker_name in enumerate(original_marker_names_list)
         }
-
-        self.virtual_marker_data = {}
 
         try:
             self.calculate_virtual_markers()
@@ -94,11 +94,35 @@ class Skeleton(BaseModel):
                 "Freemocap data integrated without virtual markers, as no virtual marker definition was provided"
             )
 
+    def integrate_rigid_marker_data(self, rigid_marker_data: np.ndarray) -> None:
+        """
+        Integrates rigid body data into the skeleton model.vc
+
+        Parameters:
+        - rigid_marker_data: NumPy array with dimensions (num_frames, num_markers, 3).
+        """
+        self.num_frames = rigid_marker_data.shape[0]
+        num_markers_in_data = rigid_marker_data.shape[1]
+      
+
+        if num_markers_in_data != len(self.marker_names):
+            raise ValueError(
+                f"The number of markers in the 3D data ({num_markers_in_data}) does not match "
+                f"the expected number of markers ({len(self.marker_names)})."
+            )
+
+        self.rigid_marker_data = {
+            marker_name: rigid_marker_data[:, i, :] for i, marker_name in enumerate(self.marker_names)
+        }
+
+        self._marker_data = self.rigid_marker_data
+
+
     def calculate_virtual_markers(self) -> None:
         """
         Calculates the positions of virtual markers based on the original marker data.
         """
-        if not self.original_marker_data:
+        if not self._marker_data:
             raise ValueError(
                 "3D marker data must be integrated before calculating virtual markers. Run `integrate_freemocap_3d_data()` first."
             )
@@ -106,11 +130,15 @@ class Skeleton(BaseModel):
             raise ValueError(
                 "Virtual marker info must be defined before calculating virtual markers. Run `add_virtual_markers()` first."
             )
+        
+        virtual_marker_data = {}
         for vm_name, vm_info in self.markers.virtual_marker_definition.virtual_markers.items():
             vm_positions = np.zeros((self.num_frames, 3))
             for marker_name, weight in zip(vm_info["marker_names"], vm_info["marker_weights"]):
-                vm_positions += self.original_marker_data[marker_name] * weight
-            self.virtual_marker_data[vm_name] = vm_positions
+                vm_positions += self._marker_data[marker_name] * weight
+            virtual_marker_data[vm_name] = vm_positions
+
+        self._marker_data.update(virtual_marker_data)
 
     def get_segment_markers(self, segment_name: str) -> Dict[str, np.ndarray]:
         """Returns a dictionary with the positions of the proximal and distal markers for a segment."""
@@ -137,12 +165,11 @@ class Skeleton(BaseModel):
         num_frames = self.num_frames
         num_markers = len(marker_names)
         data_array = np.zeros((num_frames, num_markers, 3))
+
         for i, marker_name in enumerate(marker_names):
-            if marker_name in self.original_marker_data:
-                data_array[:, i, :] = self.original_marker_data[marker_name]
-            else:
-                data_array[:, i, :] = self.virtual_marker_data[marker_name]
+            data_array[:, i, :] = self._marker_data[marker_name]
         return data_array
+
     
     @property
     def original_marker_data_as_numpy(self) -> np.ndarray:
@@ -157,20 +184,18 @@ class Skeleton(BaseModel):
         num_markers = len(marker_names)
         data_array = np.zeros((num_frames, num_markers, 3))
         for i, marker_name in enumerate(marker_names):
-            data_array[:, i, :] = self.original_marker_data[marker_name]
+            data_array[:, i, :] = self._marker_data[marker_name]
         return data_array
 
     @property
     def trajectories(self) -> Dict[str, np.ndarray]:
         """
-        Combines original and virtual marker data.
+        Returns the marker data dictionary.
 
         Returns:
-        - A dictionary combining original and virtual marker data.
+        - A dictionary of all marker names (original and virtual, if included)
         """
-        combined_data = self.original_marker_data.copy()
-        combined_data.update(self.virtual_marker_data)
-        return combined_data
+        return self._marker_data
     
     @property
     def marker_names(self) -> List[str]:
