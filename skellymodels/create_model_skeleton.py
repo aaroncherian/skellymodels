@@ -18,6 +18,22 @@ def create_mediapipe_skeleton_model():
 
         return skeleton_model
 
+def create_rigid_mediapipe_skeleton_model():
+    
+        from skellymodels.model_info.rigid_body_mediapipe_model_info import RigidMediapipeModelInfo
+
+        """
+        Creates a skeleton model using the mediapipe model
+        Returns:
+        - An instance of the Skeleton class that represents the complete skeletal model 
+        """
+
+        skeleton_model = create_skeleton_from_this_model_info(
+            model_info=RigidMediapipeModelInfo()
+        )
+
+        return skeleton_model
+
 
 def create_qualisys_skeleton_model():
     
