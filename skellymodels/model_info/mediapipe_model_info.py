@@ -159,11 +159,11 @@ class MediapipeModelInfo(ModelInfo):
             "segment_com_length": 0.433,
             "segment_com_percentage": 0.0465,
         },
-        "right_heel": {
+        "right_foot": {
             "segment_com_length": 0.5,
             "segment_com_percentage": 0.0145,
         },
-        "left_heel": {
+        "left_foot": {
             "segment_com_length": 0.5,
             "segment_com_percentage": 0.0145,
         },
