@@ -1,9 +1,10 @@
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from pydantic import BaseModel, ConfigDict
 import numpy as np
 from skellymodels.skeleton_models.marker_info import MarkerInfo
 from skellymodels.skeleton_models.segments import Segment, Segments, SegmentAnthropometry
+import json
 
 
 class Skeleton(BaseModel):
@@ -212,3 +213,32 @@ class Skeleton(BaseModel):
         except AttributeError:
             print('Virtual marker names are not available. No virtual markers are defined.')
             return []
+        
+
+    def to_custom_dict(self) -> Dict[str, Any]:
+        """
+        Converts the Skeleton instance to a dictionary with only the necessary properties for visualization.
+        """
+        def numpy_to_list(obj):
+            if isinstance(obj, np.ndarray):
+                return obj.tolist()
+            elif isinstance(obj, dict):
+                return {k: numpy_to_list(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [numpy_to_list(i) for i in obj]
+            return obj
+
+        custom_dict = {
+            'markers': self.marker_names,
+            'trajectories': numpy_to_list(self.trajectories),
+            'segments': {k: v.__dict__ for k, v in self.segments.items()} if self.segments else None,
+            'num_frames': self.num_frames
+        }
+        return custom_dict
+    
+    def to_json(self) -> str:
+        """
+        Serializes the Skeleton model to a custom JSON string with only the necessary properties.
+        """
+        custom_dict = self.to_custom_dict()
+        return json.dumps(custom_dict)
