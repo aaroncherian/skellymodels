@@ -34,6 +34,22 @@ def create_rigid_mediapipe_skeleton_model():
 
         return skeleton_model
 
+def create_openpose_skeleton_model():
+        
+        from skellymodels.model_info.openpose_model_info import OpenPoseModelInfo
+
+        """
+        Creates a skeleton model using the openpose model
+        Returns:
+        - An instance of the Skeleton class that represents the complete skeletal model 
+        """
+
+        skeleton_model = create_skeleton_from_this_model_info(
+            model_info=OpenPoseModelInfo()
+        )
+
+        return skeleton_model
+
 
 def create_qualisys_skeleton_model():
     

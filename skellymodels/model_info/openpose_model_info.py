@@ -42,9 +42,6 @@ class OpenPoseModelInfo(ModelInfo):
 
     num_tracked_points = (
         num_tracked_points_body
-        + num_tracked_points_left_hand
-        + num_tracked_points_right_hand
-        + num_tracked_points_face
     )
 
 
