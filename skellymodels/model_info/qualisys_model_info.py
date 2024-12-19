@@ -152,3 +152,66 @@ class QualisysMDN_NIHModelInfo(QualisysModelInfo):
     tracked_object_names = ['pose_landmarks']
 
 
+class QualisysTF01ProstheticModelInfo(ModelInfo):
+    landmark_names = [
+    "right_hip",
+    "left_hip",
+    "right_knee",
+    "left_knee",
+    "right_ankle",
+    "left_ankle",
+    "right_heel",
+    "left_heel",
+    "right_foot_index",
+    "left_foot_index"
+    ]
+
+    num_tracked_points = len(landmark_names)
+    tracked_object_names = ['pose_landmarks']
+
+
+    virtual_markers_definitions = {
+        "hips_center": {
+            "marker_names": ["left_hip", "right_hip"],
+            "marker_weights": [0.5, 0.5],
+        },
+    }
+
+    segment_connections = {
+            "hips": {"proximal": "left_hip", "distal": "right_hip"},
+            "right_thigh": {"proximal": "right_hip", "distal": "right_knee"},
+            "left_thigh": {"proximal": "left_hip", "distal": "left_knee"},
+            "right_shank": {"proximal": "right_knee", "distal": "right_ankle"},
+            "left_shank": {"proximal": "left_knee", "distal": "left_ankle"},
+            "right_foot": {"proximal": "right_ankle", "distal": "right_foot_index"},
+            "left_foot": {"proximal": "left_ankle", "distal": "left_foot_index"},
+            "right_foot_bottom": {"proximal": "right_heel", "distal": "right_foot_index"},
+            "left_foot_bottom": {"proximal": "left_heel", "distal": "left_foot_index"},
+            }
+    
+    center_of_mass_definitions = {
+        "right_thigh": {
+            "segment_com_length": 0.433,
+            "segment_com_percentage": 0.1,
+        },
+        "left_thigh": {
+            "segment_com_length": 0.433,
+            "segment_com_percentage": 0.1,
+        },
+        "right_shank": {
+            "segment_com_length": 0.433,
+            "segment_com_percentage": 0.0465,
+        },
+        "left_shank": {
+            "segment_com_length": 0.433,
+            "segment_com_percentage": 0.0465,
+        },
+        "right_foot": {
+            "segment_com_length": 0.5,
+            "segment_com_percentage": 0.0145,
+        },
+        "left_foot": {
+            "segment_com_length": 0.5,
+            "segment_com_percentage": 0.0145,
+        },
+    }
