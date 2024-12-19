@@ -30,7 +30,9 @@ class OpenPoseModelInfo(ModelInfo):
         "left_heel", 
         "right_big_toe", 
         "right_small_toe", 
-        "right_heel"
+        "right_heel",
+        # "head_center",
+        # "trunk_center"
     ]
 
     landmark_names =  body_landmark_names
@@ -42,6 +44,9 @@ class OpenPoseModelInfo(ModelInfo):
 
     num_tracked_points = (
         num_tracked_points_body
+        # + num_tracked_points_face
+        # + num_tracked_points_left_hand
+        # + num_tracked_points_right_hand
     )
 
 

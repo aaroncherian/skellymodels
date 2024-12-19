@@ -78,6 +78,16 @@ def create_qualisys_mdn_nih_skeleton_model():
 
       return skeleton_model
 
+def create_qualisys_tf01_skeleton_model():
+
+        from skellymodels.model_info.qualisys_model_info import QualisysTF01ProstheticModelInfo
+
+        skeleton_model = create_skeleton_from_this_model_info(
+            model_info=QualisysTF01ProstheticModelInfo()
+        )
+
+        return skeleton_model
+
 
 
 def create_skeleton_from_this_model_info(model_info:ModelInfo):
