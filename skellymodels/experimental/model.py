@@ -100,6 +100,20 @@ class SegmentConnectionsValidator(BaseModel):
                 )
 
         return self
+
+class CenterOfMassValidator(BaseModel):
+    center_of_mass_definitions: Dict[str, Dict[str, float]]
+    segment_connections: Dict[str, Dict[str, str]]
+
+    @model_validator(mode="after")
+    def validate_center_of_mass(self):
+        for segment_name, com_definition in self.center_of_mass_definitions.items():
+            # Check for required keys
+            if "segment_com_length" not in com_definition or "segment_com_percentage" not in com_definition:
+                raise ValueError(f"Center of mass definition for {segment_name} must have 'segment_com_length' and 'segment_com_percentage' keys for {segment_name}.")
+
+            if segment_name not in self.segment_connections:
+                raise ValueError(f"Segment {segment_name} not in segment connections.")
     
 
 landmark_names = [
@@ -143,6 +157,12 @@ def validate_aspect(aspect: Aspect):
     
     if aspect["segment_connections"]:
         SegmentConnectionsValidator(segment_connections=aspect["segment_connections"], marker_names=aspect["marker_names"])
+
+    if aspect["center_of_mass_definitions"]:
+        if not aspect["segment_connections"]:
+            raise ValueError("Segment connections must be defined before center of mass definitions")
+        CenterOfMassValidator(center_of_mass_definitions=aspect["center_of_mass_definitions"],
+                                segment_connections=aspect["segment_connections"])
 
         f = 2
 
