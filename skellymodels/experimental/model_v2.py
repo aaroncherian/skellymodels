@@ -114,4 +114,7 @@ structure = (AnatomicalStructureBuilder()
              .build()
 )
 
+aspect = Aspect(name="body")
+aspect.add_structure(structure)
+
 f = 2,
