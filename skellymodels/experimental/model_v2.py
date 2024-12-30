@@ -82,7 +82,11 @@ class Trajectory:
     def virtual_marker_trajectories(self):
         return {marker_name:trajectory for marker_name, trajectory in self._trajectories.items() if marker_name in self._virtual_marker_definitions.keys()}
 
-
+    def get_marker(self, marker_name: str):
+        return self._trajectories[marker_name]
+    
+    def get_frame(self, frame_number: int):
+        return {marker_name: trajectory[frame_number] for marker_name, trajectory in self._trajectories.items()}
     
 
 
