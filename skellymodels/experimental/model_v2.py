@@ -31,7 +31,7 @@ class AnatomicalStructure:
     
 
 
-from pydantic import BaseModel, field_validator, model_validator, ConfigDict
+from pydantic import BaseModel, model_validator, ConfigDict
 
 class TrajectoryValidator(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
@@ -41,7 +41,7 @@ class TrajectoryValidator(BaseModel):
     @model_validator(mode="after")
     def validate_data(self):
         if self.data.shape[1] != len(self.marker_names):
-            raise ValueError(f"Trajectory data must have the same number of markers as anatomatical structure. Data has {self.data.shape[1]} markers and anatomical structure has {len(self.marker_names)} markers.")
+            raise ValueError(f"Trajectory data must have the same number of markers as input name list. Data has {self.data.shape[1]} markers and list has {len(self.marker_names)} markers.")
 
 class Trajectory:
     def __init__(self, name: str, data: np.ndarray, marker_names: List[str], virtual_marker_definitions: Dict = None):
@@ -143,17 +143,6 @@ class AnatomicalStructureBuilder:
                                    center_of_mass_definitions=self.center_of_mass_definitions)
 
 
-class Character:
-    def __init__(self, name: str):
-        self.name = name
-        self.aspects = {}
-
-    def __getitem__(self, key: str):
-        return self.aspects[key]
-    
-    def __str__(self):
-        return self.name
-    
 
 class Aspect:
     def __init__(self, name:str):
@@ -165,9 +154,48 @@ class Aspect:
     def add_anatomical_structure(self, anatomical_structure: AnatomicalStructure):
         self.anatomical_structure = anatomical_structure
     
+    def add_trajectories(self, name:str, trajectory:np.ndarray):
+        """Add a complete set of trajectories including all markers"""
+        self.trajectories[name] = Trajectory(name=name, 
+                                       data=trajectory, 
+                                       marker_names = self.anatomical_structure.marker_names, 
+                                       virtual_marker_definitions=self.anatomical_structure.virtual_markers_definitions)
+
     def add_landmark_trajectories(self, trajectory: np.ndarray):
-        self.trajectories = Trajectory(name="landmarks", data=trajectory, marker_names = self.anatomical_structure.landmark_names, virtual_marker_definitions=self.anatomical_structure.virtual_markers_definitions)
-        
+        """Add trajectories for basic landmarks, calculating virtual markers if defined"""
+        self.trajectories['main'] = Trajectory(name="main", 
+                                       data=trajectory, 
+                                       marker_names = self.anatomical_structure.landmark_names, 
+                                       virtual_marker_definitions=self.anatomical_structure.virtual_markers_definitions)
+
+
+class Character:
+    def __init__(self, name: str):
+        self.name = name
+        self.aspects = {}
+
+    def __getitem__(self, key: str):
+        return self.aspects[key]
+    
+    def __str__(self):
+        return self.name
+    
+    def add_aspect(self, aspect: Aspect):
+        self.aspects[aspect.name] = aspect
+
+    def get_data(self, aspect_name:str, type:str):
+        return self.aspects[aspect_name].trajectories[type].trajectories
+
+    def get_marker_data(self, aspect_name:str, type:str, marker_name:str):
+        return self.aspects[aspect_name].trajectories[type].get_marker(marker_name)
+    
+    def get_frame(self, aspect_name:str, type:str, frame_number:int):
+        return self.aspects[aspect_name].trajectories[type].get_frame(frame_number)
+
+
+class Human(Character):
+    pass 
+
 
 skeleton = Character(name="mediapipe")
 
@@ -189,5 +217,6 @@ data = np.load(path_to_data)
 
 aspect.add_landmark_trajectories(data)
 
-
+skeleton.add_aspect(aspect)
+skeleton.get_data(aspect_name = 'body', type='main')
 f = 2
