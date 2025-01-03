@@ -169,7 +169,7 @@ class Aspect:
                                        virtual_marker_definitions=self.anatomical_structure.virtual_markers_definitions)
 
 
-class Character:
+class Actor:
     def __init__(self, name: str):
         self.name = name
         self.aspects = {}
@@ -193,13 +193,15 @@ class Character:
         return self.aspects[aspect_name].trajectories[type].get_frame(frame_number)
 
 
-class Human(Character):
+class Human(Actor):
     pass 
 
+from pathlib import Path
+path_to_data = Path(r"C:\Users\Aaron\FreeMocap_Data\recording_sessions\freemocap_test_data\output_data\mediapipe_body_3d_xyz.npy")
 
-skeleton = Character(name="mediapipe")
 
-structure = (AnatomicalStructureBuilder()
+human = Actor(name="mediapipe")
+body_structure = (AnatomicalStructureBuilder()
              .with_landmarks(MediapipeModelInfo().landmark_names)
              .with_virtual_markers(MediapipeModelInfo().virtual_markers_definitions)
              .with_segment_connections(MediapipeModelInfo().segment_connections)
@@ -207,16 +209,12 @@ structure = (AnatomicalStructureBuilder()
              .build()
 )
 
-aspect = Aspect(name="body")
-aspect.add_anatomical_structure(structure)
-
-from pathlib import Path
-path_to_data = Path(r"C:\Users\Aaron\FreeMocap_Data\recording_sessions\freemocap_test_data\output_data\mediapipe_body_3d_xyz.npy")
+body = Aspect(name="body")
+body.add_anatomical_structure(body_structure)
 
 data = np.load(path_to_data)
+body.add_landmark_trajectories(data)
 
-aspect.add_landmark_trajectories(data)
-
-skeleton.add_aspect(aspect)
-skeleton.get_data(aspect_name = 'body', type='main')
+human.add_aspect(body)
+human.get_data(aspect_name = 'body', type='main')
 f = 2
