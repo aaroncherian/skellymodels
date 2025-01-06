@@ -19,26 +19,24 @@ class ModelInfo(dict):
 class MediapipeModel:
     def __init__(self):
         with open('skellymodels/experimental/model_info/mediapipe_config.json') as f:
-            model_info = json.load(f)
-
+            model_info = json.l1
         self.name = model_info['name']
         self.aspects = {}
 
     def _create_models_for_aspects(self, model_info):
-        for aspect in model_info['aspects']:
-            self.aspects[aspect['name']] = ModelInfo(
-                name=aspect['name'],
-                tracker_name=aspect['tracker_name'],
-                landmark_names=aspect['landmark_names'],
-                num_tracked_points=aspect['num_tracked_points'],
-                tracked_object_names=aspect['tracked_object_names'],
-                virtual_markers_definitions=aspect['virtual_markers_definitions'],
-                segment_connections=aspect['segment_connections'],
-                center_of_mass_definitions=aspect['center_of_mass_definitions'],
-                joint_hierarchy=aspect['joint_hierarchy']
+        for aspect_name, aspect_info in model_info['aspects'].items():
+            self.aspects[aspect_name] = ModelInfo(
+                tracker_name=aspect_info['tracker_name'],
+                landmark_names=aspect_info['landmark_names'],
+                num_tracked_points=aspect_info['num_tracked_points'],
+                tracked_object_names=aspect_info['tracked_object_names'],
+                virtual_markers_definitions=aspect_info['virtual_markers_definitions'],
+                segment_connections=aspect_info['segment_connections'],
+                center_of_mass_definitions=aspect_info['center_of_mass_definitions'],
+                joint_hierarchy=aspect_info['joint_hierarchy']
             )
 
-
+b
 
 mediapipe_model = MediapipeModel()
 f = 2
