@@ -1,14 +1,14 @@
 from typing import Dict, Any, List, Optional, Union
 from dataclasses import dataclass
-from skellymodels.experimental.validators import (LandmarkValidator, 
-                                                  VirtualMarkerValidator, 
+from skellymodels.experimental.validators import (LandmarkValidator,
+                                                  VirtualMarkerValidator,
                                                   SegmentConnectionsValidator,
                                                   CenterOfMassValidator)
 from skellymodels.model_info.qualisys_model_info import QualisysModelInfo
-from skellymodels.model_info.mediapipe_model_info import MediapipeModelInfo
+# from skellymodels.model_info.mediapipe_model_info import MediapipeModelInfo
 import numpy as np
+from skellymodels.experimental.fmc_files.calculate_center_of_mass import calculate_center_of_mass_from_aspect
 
-    
 @dataclass
 class AnatomicalStructure:
     landmark_names: List[str]
@@ -22,13 +22,13 @@ class AnatomicalStructure:
         if self.virtual_markers_definitions:
             markers.extend(self.virtual_markers_definitions.keys())
         return markers
-    
+
     @property
     def virtual_marker_names(self):
         if not self.virtual_markers_definitions:
             return []
         return list(self.virtual_markers_definitions.keys())
-    
+
 
 
 from pydantic import BaseModel, model_validator, ConfigDict
@@ -51,14 +51,14 @@ class Trajectory:
         self._virtual_marker_definitions = virtual_marker_definitions
         self._validate_data(data=data, marker_names=marker_names)
         self._set_trajectory_data(data=data, marker_names=marker_names, virtual_marker_definitions=virtual_marker_definitions)
-        
-        
+
+
     def _validate_data(self, data: np.ndarray, marker_names: List[str]):
         TrajectoryValidator(data=data, marker_names= marker_names)
 
     def _set_trajectory_data(self, data:np.ndarray, marker_names:List[str], virtual_marker_definitions: Dict = None):
         self._trajectories.update({marker_name: data[:, i, :] for i, marker_name in enumerate(marker_names)})
-        
+
         if virtual_marker_definitions:
             print(f'Calculating virtual markers: {list(virtual_marker_definitions.keys())}')
             virtual_marker_data = {}
@@ -73,21 +73,23 @@ class Trajectory:
     @property
     def trajectories(self):
         return self._trajectories
-    
-    @property 
+
+    @property
     def landmark_trajectories(self):
         return {marker_name:trajectory for marker_name, trajectory in self._trajectories.items() if marker_name in self._marker_names}
-    
+
     @property
     def virtual_marker_trajectories(self):
+        if not self._virtual_marker_definitions:
+            return {}
         return {marker_name:trajectory for marker_name, trajectory in self._trajectories.items() if marker_name in self._virtual_marker_definitions.keys()}
 
     def get_marker(self, marker_name: str):
         return self._trajectories[marker_name]
-    
+
     def get_frame(self, frame_number: int):
         return {marker_name: trajectory[frame_number] for marker_name, trajectory in self._trajectories.items()}
-    
+
 
 
 
@@ -111,7 +113,7 @@ class AnatomicalStructureBuilder:
         LandmarkValidator(landmark_names=landmark_names)
         self.landmark_names = landmark_names.copy()
         return self
-    
+
     def with_virtual_markers(self, virtual_marker_definitions: Dict[str, Dict[str, List[Union[float, str]]]]):
         if not self.landmark_names:
             raise ValueError("Landmark names must be set before adding virtual markers.")
@@ -119,13 +121,13 @@ class AnatomicalStructureBuilder:
                                landmark_names=self.landmark_names)
         self.virtual_markers_definitions = virtual_marker_definitions
         return self
-    
+
     def with_segment_connections(self, segment_connections: Dict[str, Dict[str, str]]):
         SegmentConnectionsValidator(segment_connections=segment_connections,
                                     marker_names=self._marker_names)
         self.segment_connections = segment_connections
         return self
-    
+
     def with_center_of_mass(self, center_of_mass_definitions: Dict[str, Dict[str, float]]):
         if not self.segment_connections:
             raise ValueError("Segment connections must be set before adding center of mass definitions")
@@ -153,19 +155,19 @@ class Aspect:
 
     def add_anatomical_structure(self, anatomical_structure: AnatomicalStructure):
         self.anatomical_structure = anatomical_structure
-    
+
     def add_trajectories(self, name:str, trajectory:np.ndarray):
         """Add a complete set of trajectories including all markers"""
-        self.trajectories[name] = Trajectory(name=name, 
-                                       data=trajectory, 
-                                       marker_names = self.anatomical_structure.marker_names, 
+        self.trajectories[name] = Trajectory(name=name,
+                                       data=trajectory,
+                                       marker_names = self.anatomical_structure.marker_names,
                                        virtual_marker_definitions=self.anatomical_structure.virtual_markers_definitions)
 
     def add_landmark_trajectories(self, trajectory: np.ndarray):
         """Add trajectories for basic landmarks, calculating virtual markers if defined"""
-        self.trajectories['main'] = Trajectory(name="main", 
-                                       data=trajectory, 
-                                       marker_names = self.anatomical_structure.landmark_names, 
+        self.trajectories['main'] = Trajectory(name="main",
+                                       data=trajectory,
+                                       marker_names = self.anatomical_structure.landmark_names,
                                        virtual_marker_definitions=self.anatomical_structure.virtual_markers_definitions)
 
 
@@ -176,10 +178,10 @@ class Actor:
 
     def __getitem__(self, key: str):
         return self.aspects[key]
-    
+
     def __str__(self):
-        return self.name
-    
+        return str(self.aspects.keys())
+
     def add_aspect(self, aspect: Aspect):
         self.aspects[aspect.name] = aspect
 
@@ -188,33 +190,133 @@ class Actor:
 
     def get_marker_data(self, aspect_name:str, type:str, marker_name:str):
         return self.aspects[aspect_name].trajectories[type].get_marker(marker_name)
-    
+
     def get_frame(self, aspect_name:str, type:str, frame_number:int):
         return self.aspects[aspect_name].trajectories[type].get_frame(frame_number)
 
 
+
+
 class Human(Actor):
-    pass 
+    pass
+
+
+
+
+
+
+
 
 from pathlib import Path
-path_to_data = Path(r"C:\Users\Aaron\FreeMocap_Data\recording_sessions\freemocap_test_data\output_data\mediapipe_body_3d_xyz.npy")
+from skellytracker.trackers.mediapipe_tracker.mediapipe_model_info import MediapipeModelInfo
 
 
-human = Actor(name="mediapipe")
-body_structure = (AnatomicalStructureBuilder()
-             .with_landmarks(MediapipeModelInfo().landmark_names)
+def build_human_from_mediapipe_model_info(human:Actor, data:np.ndarray):
+
+    body = Aspect(name = "body")
+    body_structure = (AnatomicalStructureBuilder()
+             .with_landmarks(MediapipeModelInfo().body_landmark_names)
              .with_virtual_markers(MediapipeModelInfo().virtual_markers_definitions)
              .with_segment_connections(MediapipeModelInfo().segment_connections)
              .with_center_of_mass(MediapipeModelInfo().center_of_mass_definitions)
              .build()
-)
+    )
+    body.add_anatomical_structure(body_structure)
 
-body = Aspect(name="body")
-body.add_anatomical_structure(body_structure)
+    face = Aspect(name = "face")
+    face_landmark_names = [str(i).zfill(4) for i in range(MediapipeModelInfo().num_tracked_points_face)]
+    face_structure = (AnatomicalStructureBuilder()
+             .with_landmarks(face_landmark_names)
+             .build()
+    )
+    face.add_anatomical_structure(face_structure)
+
+    left_hand = Aspect(name = "left_hand")
+    left_hand_landmark_names = [ str(i).zfill(4) for i in range(MediapipeModelInfo().num_tracked_points_left_hand)]
+    left_hand_structure = (AnatomicalStructureBuilder()
+                .with_landmarks(left_hand_landmark_names)
+                .build()
+        )
+    left_hand.add_anatomical_structure(left_hand_structure)
+
+    right_hand = Aspect(name = "right_hand")
+    right_hand_landmark_names = [ str(i).zfill(4) for i in range(MediapipeModelInfo().num_tracked_points_right_hand)]
+    right_hand_structure = (AnatomicalStructureBuilder()
+                .with_landmarks(right_hand_landmark_names)
+                .build()
+        )
+    right_hand.add_anatomical_structure(right_hand_structure)
+
+    data_split_by_category = split_data(data)
+
+    body.add_landmark_trajectories(data_split_by_category['pose_landmarks'])
+    face.add_landmark_trajectories(data_split_by_category['face_landmarks'])
+    left_hand.add_landmark_trajectories(data_split_by_category['left_hand_landmarks'])
+    right_hand.add_landmark_trajectories(data_split_by_category['right_hand_landmarks'])
+
+    human.add_aspect(body)
+    human.add_aspect(face)
+    human.add_aspect(left_hand)
+    human.add_aspect(right_hand)
+
+    return human
+
+    f = 2
+
+
+import numpy as np
+
+def split_data(data: np.ndarray) -> dict:
+    tracked_object_names = MediapipeModelInfo.tracked_object_names
+    face_landmark_names = [str(i).zfill(4) for i in range(MediapipeModelInfo().num_tracked_points_face)]
+
+    lengths = [
+        len(MediapipeModelInfo.body_landmark_names), 
+        len(MediapipeModelInfo.hand_landmark_names), 
+        len(MediapipeModelInfo.hand_landmark_names),
+        len(face_landmark_names)         
+    ]
+    
+    # Generate slices for each category
+    current_index = 0
+    slices = {}
+    for name, length in zip(tracked_object_names, lengths):
+        slices[name] = slice(current_index, current_index + length)
+        current_index += length
+    
+    # Split the data using slices
+    category_data = {name: data[:,slc,:] for name, slc in slices.items()}
+    
+    return category_data
+
+
+path_to_data = Path(r"C:\Users\aaron\FreeMocap_Data\recording_sessions\freemocap_sample_data\output_data\raw_data\mediapipe_3dData_numFrames_numTrackedPoints_spatialXYZ.npy")
 
 data = np.load(path_to_data)
-body.add_landmark_trajectories(data)
 
-human.add_aspect(body)
-human.get_data(aspect_name = 'body', type='main')
+
+human = build_human_from_mediapipe_model_info(Actor(name="human_one"), data)
+
+for aspect in human.aspects.values():
+    calculate_center_of_mass_from_aspect()
+
 f = 2
+
+
+# body_structure = (AnatomicalStructureBuilder()
+#              .with_landmarks(MediapipeModelInfo().landmark_names)
+#              .with_virtual_markers(MediapipeModelInfo().virtual_markers_definitions)
+#              .with_segment_connections(MediapipeModelInfo().segment_connections)
+#              .with_center_of_mass(MediapipeModelInfo().center_of_mass_definitions)
+#              .build()
+# )
+
+# body = Aspect(name="body")
+# body.add_anatomical_structure(body_structure)
+
+# # data = np.load(path_to_data)
+# body.add_landmark_trajectories(data)
+
+# human.add_aspect(body)
+# human.get_data(aspect_name = 'body', type='main')
+# f = 2
