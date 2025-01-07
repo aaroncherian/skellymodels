@@ -1,5 +1,6 @@
 from pathlib import Path
 import numpy as np
+import pandas as pd
 
 from skellymodels.experimental.model_redo.managers.actor import Actor
 from skellymodels.experimental.model_redo.utils.create_mediapipe_actor import create_aspects_for_mediapipe_human, split_data
@@ -63,7 +64,55 @@ for aspect in human.aspects.values():
     else:
         print('Skipping rigid bones enforcement for aspect:', aspect.name)
 pprint([human.aspects.values()])
+
+#Save out trajectories
+
+def save_out_numpy_data(actor:Actor):
+    for aspect in actor.aspects.values():
+        for trajectory in aspect.trajectories.values():
+            print('Saving out numpy:', aspect.metadata['tracker_type'], aspect.name, trajectory.name)
+            np.save(f"{aspect.metadata['tracker_type']}_{aspect.name}_{trajectory.name}.npy", trajectory.data)
+            
+def save_out_csv_data(actor:Actor):
+    for aspect in actor.aspects.values():
+        for trajectory in aspect.trajectories.values():
+            print('Saving out CSV:', aspect.metadata['tracker_type'], aspect.name, trajectory.name)
+            trajectory.as_dataframe.to_csv(f"{aspect.metadata['tracker_type']}_{aspect.name}_{trajectory.name}.csv")
+
+def save_out_all_data_csv(actor: Actor):
+    all_data = []
+
+    # Loop through aspects and trajectories
+    for aspect_name, aspect in actor.aspects.items():
+        for trajectory_name, trajectory in aspect.trajectories.items():
+            if trajectory_name == '3d_xyz':
+                # Get tidy DataFrame for the trajectory
+                trajectory_df = trajectory.as_dataframe
+                
+                # Add metadata column for model
+                trajectory_df['model'] = f"{aspect.metadata['tracker_type']}_{aspect_name}"
+                
+                # Append DataFrame to the list
+                all_data.append(trajectory_df)
+
+    # Combine all DataFrames into one
+    big_df = pd.concat(all_data, ignore_index=True)
+
+    # Sort by frame and then by model
+    big_df = big_df.sort_values(by=['frame', 'model']).reset_index(drop=True)
+
+    # Save the result to CSV
+    big_df.to_csv('freemocap_data_by_frame.csv', index=False)
+    print("Data successfully saved to 'freemocap_data_by_frame.csv'")
+
+
+
+save_out_numpy_data(actor = human)
+save_out_csv_data(actor = human)
+save_out_all_data_csv(actor = human)
+
+
+
+
 f = 2
 
-
-# f = 2

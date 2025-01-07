@@ -30,7 +30,7 @@ def create_aspects_for_mediapipe_human():
     face.add_tracker_type("mediapipe")
 
     left_hand = Aspect(name = "left_hand")
-    left_hand_landmark_names = [ str(i).zfill(4) for i in range(MediapipeModelInfo().num_tracked_points_left_hand)]
+    left_hand_landmark_names = [ f"left_{str(i).zfill(4)}" for i in range(MediapipeModelInfo().num_tracked_points_left_hand)]
     left_hand_structure = (AnatomicalStructureBuilder()
                 .with_landmarks(left_hand_landmark_names)
                 .build()
@@ -39,20 +39,13 @@ def create_aspects_for_mediapipe_human():
     left_hand.add_tracker_type("mediapipe")
 
     right_hand = Aspect(name = "right_hand")
-    right_hand_landmark_names = [ str(i).zfill(4) for i in range(MediapipeModelInfo().num_tracked_points_right_hand)]
+    right_hand_landmark_names = [f"right_{str(i).zfill(4)}" for i in range(MediapipeModelInfo().num_tracked_points_right_hand)]
     right_hand_structure = (AnatomicalStructureBuilder()
                 .with_landmarks(right_hand_landmark_names)
                 .build()
         )
     right_hand.add_anatomical_structure(right_hand_structure)
     right_hand.add_tracker_type("mediapipe")
-
-    # data_split_by_category = split_data(data)
-
-    # body.add_landmark_trajectories(data_split_by_category['pose_landmarks'])
-    # face.add_landmark_trajectories(data_split_by_category['face_landmarks'])
-    # left_hand.add_landmark_trajectories(data_split_by_category['left_hand_landmarks'])
-    # right_hand.add_landmark_trajectories(data_split_by_category['right_hand_landmarks'])
 
     return body, right_hand, left_hand, face
 

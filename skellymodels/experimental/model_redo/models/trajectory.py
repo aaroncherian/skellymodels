@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict, model_validator
 import numpy as np
+import pandas as pd
 from typing import Dict, List
 
 
@@ -23,11 +24,11 @@ class Trajectory:
                  segment_connections: Dict = None):
         self.name = name
         self._trajectories = {}
-        self._marker_names = marker_names
+        self._landmark_names = marker_names
         self._virtual_marker_definitions = virtual_marker_definitions
         self._segment_connections = segment_connections
-        self._validate_data(data=data, marker_names=marker_names)
-        self._set_trajectory_data(data=data, marker_names=marker_names, virtual_marker_definitions=virtual_marker_definitions)
+        self._validate_data(data=data, marker_names=self._landmark_names)
+        self._set_trajectory_data(data=data, marker_names=self._landmark_names, virtual_marker_definitions=virtual_marker_definitions)
         self._num_frames = data.shape[0]
 
     def _validate_data(self, data: np.ndarray, marker_names: List[str]):
@@ -35,7 +36,8 @@ class Trajectory:
 
     def _set_trajectory_data(self, data:np.ndarray, marker_names:List[str], virtual_marker_definitions: Dict = None):
         self._trajectories.update({marker_name: data[:, i, :] for i, marker_name in enumerate(marker_names)})
-
+        self._marker_names = marker_names.copy()
+        
         if virtual_marker_definitions:
             print(f'Calculating virtual markers: {list(virtual_marker_definitions.keys())}')
             virtual_marker_data = {}
@@ -44,7 +46,8 @@ class Trajectory:
                 for marker_name, weight in zip(vm_info["marker_names"], vm_info["marker_weights"]):
                     vm_positions += self._trajectories[marker_name] * weight
                 virtual_marker_data[vm_name] = vm_positions
-
+            
+            self._marker_names += list(virtual_marker_data.keys())
             self._trajectories.update(virtual_marker_data)
 
     @property
@@ -53,7 +56,7 @@ class Trajectory:
 
     @property
     def landmark_data(self):
-        return {marker_name:trajectory for marker_name, trajectory in self._trajectories.items() if marker_name in self._marker_names}
+        return {landmark_name:trajectory for landmark_name, trajectory in self._trajectories.items() if landmark_name in self._landmark_names}
 
     @property
     def virtual_marker_data(self):
@@ -78,6 +81,37 @@ class Trajectory:
     @property
     def num_frames(self):
         return self._num_frames
+    
+    @property
+    def as_numpy(self):
+        numpy_data = np.full((self._num_frames, len(self._marker_names), 3), np.nan)
+
+        for marker_idx, marker_name in enumerate(self._marker_names):
+            if marker_name in self._trajectories:
+                numpy_data[:, marker_idx, :] = self._trajectories[marker_name]
+
+        return numpy_data
+    
+    @property
+    def as_dataframe(self):
+        tidy_data = []
+
+        for frame_number in range(self._num_frames):
+            frame_data = self.get_frame(frame_number)
+            for marker_name, marker_3d_position in frame_data.items():
+                
+                x, y, z = marker_3d_position
+
+                tidy_data.append({
+                    "frame": frame_number,
+                    "keypoint": marker_name,
+                    "x": x,
+                    "y": y,
+                    "z": z
+                })
+
+        return pd.DataFrame(tidy_data)        
+
 
     def get_marker(self, marker_name: str):
         return self._trajectories[marker_name]
