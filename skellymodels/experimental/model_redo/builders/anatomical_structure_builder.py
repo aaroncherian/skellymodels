@@ -8,6 +8,7 @@ class AnatomicalStructureBuilder:
         self.virtual_markers_definitions: Optional[Dict[str, Dict[str, List[Union[float, str]]]]] = None
         self.segment_connections: Optional[Dict[str, Dict[str, str]]] = None
         self.center_of_mass_definitions: Optional[Dict[str, Dict[str, float]]] = None
+        self.joint_hierarchy: Optional[Dict[str, List[str]]] = None
 
     @property
     def _marker_names(self):
@@ -44,6 +45,12 @@ class AnatomicalStructureBuilder:
                                 segment_connections=self.segment_connections)
         self.center_of_mass_definitions = center_of_mass_definitions
         return self
+    
+    def with_joint_hierarchy(self,joint_hierarchy: Dict[str, List[str]]):
+        JointHierarchyValidator(joint_hierarchy=joint_hierarchy,
+                                marker_names=self._marker_names)
+        self.joint_hierarchy = joint_hierarchy
+        return self
 
     def build(self):
         if not self.landmark_names:
@@ -51,7 +58,8 @@ class AnatomicalStructureBuilder:
         return AnatomicalStructure(landmark_names=self.landmark_names,
                                    virtual_markers_definitions=self.virtual_markers_definitions,
                                    segment_connections=self.segment_connections,
-                                   center_of_mass_definitions=self.center_of_mass_definitions)
+                                   center_of_mass_definitions=self.center_of_mass_definitions,
+                                   joint_hierarchy=self.joint_hierarchy)
 
 
 
@@ -155,3 +163,18 @@ class CenterOfMassValidator(BaseModel):
             if segment_name not in self.segment_connections:
                 raise ValueError(f"Segment {segment_name} not in segment connections.")
 
+
+class JointHierarchyValidator(BaseModel):
+    joint_hierarchy: Dict[str, List[str]]
+    marker_names: List[str]
+
+    @model_validator(mode="after")
+    def validate_joint_hierarchy(self):
+        for joint_name, joint_hierarchy in self.joint_hierarchy.items():
+
+            if joint_name not in self.marker_names:
+                raise ValueError(f"Joint name {joint_name} not in list of markers.")
+
+            if not all(marker in self.marker_names for marker in joint_hierarchy):
+                raise ValueError(f"Joint hierarchy for {joint_name} contains markers not in the list of markers.")
+        return self

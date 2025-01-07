@@ -1,7 +1,7 @@
 from skellymodels.experimental.model_redo.models.anatomical_structure import AnatomicalStructure
 from skellymodels.experimental.model_redo.models.trajectory import Trajectory
 
-from typing import Dict, Any
+from typing import Dict, Any, List
 import numpy as np
 
 class Aspect:
@@ -14,19 +14,24 @@ class Aspect:
     def add_anatomical_structure(self, anatomical_structure: AnatomicalStructure):
         self.anatomical_structure = anatomical_structure
 
-    def add_trajectories(self, name:str, trajectory:np.ndarray):
-        """Add a complete set of trajectories including all markers"""
+    def add_trajectories(self, name:str, 
+                         data:np.ndarray, 
+                         marker_names:List[str] = None,
+                         virtual_marker_definitions:Dict = None,
+                         segment_connections:Dict = None):
         self.trajectories[name] = Trajectory(name=name,
-                                       data=trajectory,
-                                       marker_names = self.anatomical_structure.marker_names,
-                                       virtual_marker_definitions=self.anatomical_structure.virtual_markers_definitions)
+                                       data=data,
+                                       marker_names = marker_names,
+                                       virtual_marker_definitions=virtual_marker_definitions,
+                                       segment_connections=segment_connections)
 
     def add_landmark_trajectories(self, trajectory: np.ndarray):
         """Add trajectories for basic landmarks, calculating virtual markers if defined"""
         self.trajectories['main'] = Trajectory(name="main",
                                        data=trajectory,
                                        marker_names = self.anatomical_structure.landmark_names,
-                                       virtual_marker_definitions=self.anatomical_structure.virtual_markers_definitions)
+                                       virtual_marker_definitions=self.anatomical_structure.virtual_markers_definitions,
+                                       segment_connections=self.anatomical_structure.segment_connections)
 
     def add_metadata(self, metadata: Dict[str, Any]):
         self.metadata.update(metadata)

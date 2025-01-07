@@ -14,6 +14,7 @@ def create_aspects_for_mediapipe_human():
              .with_virtual_markers(MediapipeModelInfo().virtual_markers_definitions)
              .with_segment_connections(MediapipeModelInfo().segment_connections)
              .with_center_of_mass(MediapipeModelInfo().center_of_mass_definitions)
+             .with_joint_hierarchy(MediapipeModelInfo().joint_hierarchy)
              .build()
     )
     body.add_anatomical_structure(body_structure)

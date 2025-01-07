@@ -5,6 +5,8 @@ from skellymodels.experimental.model_redo.managers.actor import Actor
 from skellymodels.experimental.model_redo.utils.create_mediapipe_actor import create_aspects_for_mediapipe_human, split_data
 from pprint import pprint
 
+from skellymodels.experimental.model_redo.fmc_anatomical_pipeline.calculate_center_of_mass import calculate_center_of_mass_from_trajectory
+from skellymodels.experimental.model_redo.fmc_anatomical_pipeline.enforce_rigid_bones import enforce_rigid_bones_from_trajectory
 ## Choose a path to the directory 
 path_to_data = Path(r"C:\Users\aaron\FreeMocap_Data\recording_sessions\freemocap_sample_data\output_data\raw_data\mediapipe_3dData_numFrames_numTrackedPoints_spatialXYZ.npy")
 data = np.load(path_to_data)
@@ -31,6 +33,32 @@ human.add_aspect(face)
 human.add_aspect(left_hand)
 human.add_aspect(right_hand)
 pprint([human.aspects.values()])
+
+# Calculate center of mass 
+for aspect in human.aspects.values():
+    if aspect.anatomical_structure.center_of_mass_definitions:
+        total_body_com, segment_com = calculate_center_of_mass_from_trajectory(aspect.trajectories['main'], aspect.anatomical_structure.center_of_mass_definitions)
+
+        aspect.add_trajectories(name = 'total_body_com',
+                                data = total_body_com,
+                                marker_names = ['total_body'])
+        
+        aspect.add_trajectories(name = 'segment_com',
+                                data = segment_com,
+                                marker_names = list(aspect.anatomical_structure.center_of_mass_definitions.keys()))
+        
+pprint([human.aspects.values()])
+
+for aspect in human.aspects.values():
+    if aspect.anatomical_structure.joint_hierarchy:
+        rigid_bones = enforce_rigid_bones_from_trajectory(aspect.trajectories['main'], aspect.anatomical_structure.joint_hierarchy)
+
+        aspect.add_trajectories(name = 'rigid_bones',
+                                data = rigid_bones,
+                                marker_names = aspect.anatomical_structure.marker_names)
+pprint([human.aspects.values()])
+
+f = 2
 
 
 # f = 2

@@ -13,15 +13,22 @@ class TrajectoryValidator(BaseModel):
         if self.data.shape[1] != len(self.marker_names):
             raise ValueError(f"Trajectory data must have the same number of markers as input name list. Data has {self.data.shape[1]} markers and list has {len(self.marker_names)} markers.")
 
+    
+
 class Trajectory:
-    def __init__(self, name: str, data: np.ndarray, marker_names: List[str], virtual_marker_definitions: Dict = None):
+    def __init__(self, name: str, 
+                 data: np.ndarray, 
+                 marker_names: List[str], 
+                 virtual_marker_definitions: Dict = None, 
+                 segment_connections: Dict = None):
         self.name = name
         self._trajectories = {}
         self._marker_names = marker_names
         self._virtual_marker_definitions = virtual_marker_definitions
+        self._segment_connections = segment_connections
         self._validate_data(data=data, marker_names=marker_names)
         self._set_trajectory_data(data=data, marker_names=marker_names, virtual_marker_definitions=virtual_marker_definitions)
-
+        self._num_frames = data.shape[0]
 
     def _validate_data(self, data: np.ndarray, marker_names: List[str]):
         TrajectoryValidator(data=data, marker_names= marker_names)
@@ -41,21 +48,42 @@ class Trajectory:
             self._trajectories.update(virtual_marker_data)
 
     @property
-    def trajectories(self):
+    def data(self):
         return self._trajectories
 
     @property
-    def landmark_trajectories(self):
+    def landmark_data(self):
         return {marker_name:trajectory for marker_name, trajectory in self._trajectories.items() if marker_name in self._marker_names}
 
     @property
-    def virtual_marker_trajectories(self):
+    def virtual_marker_data(self):
         if not self._virtual_marker_definitions:
             return {}
         return {marker_name:trajectory for marker_name, trajectory in self._trajectories.items() if marker_name in self._virtual_marker_definitions.keys()}
+
+    @property
+    def segment_data(self):
+        if not self._segment_connections:
+            return {}
+        
+        segment_positions = {}
+        for name, connection in self._segment_connections.items():
+            proximal = self._trajectories.get(connection["proximal"])
+            distal = self._trajectories.get(connection["distal"])
+
+            segment_positions.update({name: {'proximal': proximal, 'distal': distal}})
+
+        return segment_positions
+    
+    @property
+    def num_frames(self):
+        return self._num_frames
 
     def get_marker(self, marker_name: str):
         return self._trajectories[marker_name]
 
     def get_frame(self, frame_number: int):
         return {marker_name: trajectory[frame_number] for marker_name, trajectory in self._trajectories.items()}
+
+    
+

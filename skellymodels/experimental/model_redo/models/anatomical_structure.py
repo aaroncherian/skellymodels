@@ -7,6 +7,7 @@ class AnatomicalStructure:
     virtual_markers_definitions: Optional[Dict[str, Dict[str, List[Union[float, str]]]]] = None
     segment_connections: Optional[Dict[str, Dict[str, str]]] = None
     center_of_mass_definitions: Optional[Dict[str, Dict[str, float]]] = None
+    joint_hierarchy: Optional[Dict[str, List[str]]] = None
 
     @property
     def marker_names(self):
@@ -34,7 +35,12 @@ class AnatomicalStructure:
             f"{len(self.center_of_mass_definitions)} center of mass definitions"
             if self.center_of_mass_definitions else "No center of mass definitions"
         )
+        joint_hierarchy = (
+            f"{len(self.joint_hierarchy)} joint hierarchies"
+            if self.joint_hierarchy else "No joint hierarchy"
+        )
         return (f"  {len(self.landmark_names)} landmarks\n"
                 f"  {virtual_markers}\n"
                 f"  {segments}\n"
-                f"  {com_definitions}")
+                f"  {com_definitions}\n"
+                f"  {joint_hierarchy}")

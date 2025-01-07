@@ -298,7 +298,7 @@ data = np.load(path_to_data)
 human = build_human_from_mediapipe_model_info(Actor(name="human_one"), data)
 
 for aspect in human.aspects.values():
-    calculate_center_of_mass_from_aspect()
+    calculate_center_of_mass_from_aspect(aspect)
 
 f = 2
 
