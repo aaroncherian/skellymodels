@@ -27,7 +27,7 @@ class Aspect:
 
     def add_landmark_trajectories(self, trajectory: np.ndarray):
         """Add trajectories for basic landmarks, calculating virtual markers if defined"""
-        self.trajectories['main'] = Trajectory(name="main",
+        self.trajectories['3d_xyz'] = Trajectory(name="3d_xyz",
                                        data=trajectory,
                                        marker_names = self.anatomical_structure.landmark_names,
                                        virtual_marker_definitions=self.anatomical_structure.virtual_markers_definitions,
