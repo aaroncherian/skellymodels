@@ -7,6 +7,7 @@ from skellytracker.trackers.mediapipe_tracker.mediapipe_model_info import Mediap
 import numpy as np
 
 
+
 def create_aspects_for_mediapipe_human():
     body = Aspect(name = "body")
     body_structure = (AnatomicalStructureBuilder()

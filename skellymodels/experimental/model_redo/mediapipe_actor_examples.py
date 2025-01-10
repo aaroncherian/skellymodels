@@ -15,10 +15,10 @@ data = np.load(path_to_data)
 ## Create an Actor
 human = Actor(name="human_one")
 
+
 ## Create body, hands and face aspects with anatomical structures using the mediapipe info model
 body, right_hand, left_hand, face = create_aspects_for_mediapipe_human()
 pprint(body)
-
 
 ## Split 3d data into body/face/hands and add to the respective aspects
 data_split_by_category = split_data(data)
