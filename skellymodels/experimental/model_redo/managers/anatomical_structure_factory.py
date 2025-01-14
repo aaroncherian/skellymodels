@@ -45,10 +45,8 @@ class AnatomicalStructureFactory(ABC):
         if self.config.include_face:
             structures["face"] = self.create_face_structure()
         
-        if self.config.include_left_hand:
+        if self.config.include_hands:
             structures["left_hand"] = self.create_left_hand_structure()
-        
-        if self.config.include_right_hand:
             structures["right_hand"] = self.create_right_hand_structure()
 
         return structures
@@ -61,6 +59,7 @@ class MediaPipeStructureFactory(AnatomicalStructureFactory):
                 .with_virtual_markers(MediapipeModelInfo().virtual_markers_definitions)
                 .with_segment_connections(MediapipeModelInfo().segment_connections)
                 .with_center_of_mass(MediapipeModelInfo().center_of_mass_definitions)
+                .with_joint_hierarchy(MediapipeModelInfo().joint_hierarchy)
         ).build()
     
     def create_face_structure(self) -> AnatomicalStructure:
