@@ -55,7 +55,7 @@ class MediaPipeStructureFactory(AnatomicalStructureFactory):
 
     def create_body_structure(self) -> AnatomicalStructure:
         return (AnatomicalStructureBuilder()
-                .with_landmarks(MediapipeModelInfo().body_landmark_names)
+                .with_tracked_points(MediapipeModelInfo().body_landmark_names)
                 .with_virtual_markers(MediapipeModelInfo().virtual_markers_definitions)
                 .with_segment_connections(MediapipeModelInfo().segment_connections)
                 .with_center_of_mass(MediapipeModelInfo().center_of_mass_definitions)
@@ -64,17 +64,17 @@ class MediaPipeStructureFactory(AnatomicalStructureFactory):
     
     def create_face_structure(self) -> AnatomicalStructure:
         return (AnatomicalStructureBuilder()
-                .with_landmarks([str(i).zfill(4) for i in range(MediapipeModelInfo().num_tracked_points_face)])
+                .with_tracked_points([str(i).zfill(4) for i in range(MediapipeModelInfo().num_tracked_points_face)])
         ).build()
     
     def create_left_hand_structure(self) -> AnatomicalStructure:
         return (AnatomicalStructureBuilder()
-                .with_landmarks([f"left_{str(i).zfill(4)}" for i in range(MediapipeModelInfo().num_tracked_points_left_hand)])
+                .with_tracked_points([f"left_{str(i).zfill(4)}" for i in range(MediapipeModelInfo().num_tracked_points_left_hand)])
         ).build()
     
     def create_right_hand_structure(self) -> AnatomicalStructure:
         return (AnatomicalStructureBuilder()
-                .with_landmarks([f"right_{str(i).zfill(4)}" for i in range(MediapipeModelInfo().num_tracked_points_right_hand)])
+                .with_tracked_points([f"right_{str(i).zfill(4)}" for i in range(MediapipeModelInfo().num_tracked_points_right_hand)])
         ).build()
 
 

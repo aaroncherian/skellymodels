@@ -23,10 +23,10 @@ pprint(body)
 ## Split 3d data into body/face/hands and add to the respective aspects
 data_split_by_category = split_data(data)
 
-body.add_landmark_trajectories(data_split_by_category['pose_landmarks'])
-face.add_landmark_trajectories(data_split_by_category['face_landmarks'])
-left_hand.add_landmark_trajectories(data_split_by_category['left_hand_landmarks'])
-right_hand.add_landmark_trajectories(data_split_by_category['right_hand_landmarks'])
+body.add_tracked_points(data_split_by_category['pose_landmarks'])
+face.add_tracked_points(data_split_by_category['face_landmarks'])
+left_hand.add_tracked_points(data_split_by_category['left_hand_landmarks'])
+right_hand.add_tracked_points(data_split_by_category['right_hand_landmarks'])
 
 ## Add the aspects to the actor
 human.add_aspect(body)
@@ -41,11 +41,11 @@ for aspect in human.aspects.values():
         print('Calculating center of mass for aspect:', aspect.name)
         total_body_com, segment_com = calculate_center_of_mass_from_trajectory(aspect.trajectories['3d_xyz'], aspect.anatomical_structure.center_of_mass_definitions)
 
-        aspect.add_trajectories(name = 'total_body_com',
+        aspect.add_trajectory(name = 'total_body_com',
                                 data = total_body_com,
                                 marker_names = ['total_body'])
         
-        aspect.add_trajectories(name = 'segment_com',
+        aspect.add_trajectory(name = 'segment_com',
                                 data = segment_com,
                                 marker_names = list(aspect.anatomical_structure.center_of_mass_definitions.keys()))
         
@@ -58,7 +58,7 @@ for aspect in human.aspects.values():
         print('Enforcing rigid bones for aspect:', aspect.name)
         rigid_bones = enforce_rigid_bones_from_trajectory(aspect.trajectories['3d_xyz'], aspect.anatomical_structure.joint_hierarchy)
 
-        aspect.add_trajectories(name = 'rigid_3d_xyz',
+        aspect.add_trajectory(name = 'rigid_3d_xyz',
                                 data = rigid_bones,
                                 marker_names = aspect.anatomical_structure.marker_names)
     else:

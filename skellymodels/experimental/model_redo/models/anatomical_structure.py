@@ -3,7 +3,7 @@ from typing import Dict, List, Optional, Union
 
 @dataclass
 class AnatomicalStructure:
-    landmark_names: List[str]
+    tracked_point_names: List[str]
     virtual_markers_definitions: Optional[Dict[str, Dict[str, List[Union[float, str]]]]] = None
     segment_connections: Optional[Dict[str, Dict[str, str]]] = None
     center_of_mass_definitions: Optional[Dict[str, Dict[str, float]]] = None
@@ -11,7 +11,7 @@ class AnatomicalStructure:
 
     @property
     def marker_names(self):
-        markers = self.landmark_names.copy()
+        markers = self.tracked_point_names.copy()
         if self.virtual_markers_definitions:
             markers.extend(self.virtual_markers_definitions.keys())
         return markers
@@ -39,7 +39,7 @@ class AnatomicalStructure:
             f"{len(self.joint_hierarchy)} joint hierarchies"
             if self.joint_hierarchy else "No joint hierarchy"
         )
-        return (f"  {len(self.landmark_names)} landmarks\n"
+        return (f"  {len(self.tracked_point_names)} tracked points\n"
                 f"  {virtual_markers}\n"
                 f"  {segments}\n"
                 f"  {com_definitions}\n"

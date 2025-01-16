@@ -2,7 +2,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from skellymodels.experimental.model_redo.managers.human import Human, HumanConfiguration, HumanAspects
+from skellymodels.experimental.model_redo.managers.human import Human, HumanConfiguration
 
 from skellymodels.experimental.model_redo.fmc_anatomical_pipeline.calculate_center_of_mass import calculate_center_of_mass_from_trajectory
 from skellymodels.experimental.model_redo.fmc_anatomical_pipeline.enforce_rigid_bones import enforce_rigid_bones_from_trajectory

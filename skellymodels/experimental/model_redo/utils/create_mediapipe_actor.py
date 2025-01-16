@@ -11,7 +11,7 @@ import numpy as np
 def create_aspects_for_mediapipe_human():
     body = Aspect(name = "body")
     body_structure = (AnatomicalStructureBuilder()
-             .with_landmarks(MediapipeModelInfo().body_landmark_names)
+             .with_tracked_points(MediapipeModelInfo().body_landmark_names)
              .with_virtual_markers(MediapipeModelInfo().virtual_markers_definitions)
              .with_segment_connections(MediapipeModelInfo().segment_connections)
              .with_center_of_mass(MediapipeModelInfo().center_of_mass_definitions)
@@ -24,7 +24,7 @@ def create_aspects_for_mediapipe_human():
     face = Aspect(name = "face")
     face_landmark_names = [str(i).zfill(4) for i in range(MediapipeModelInfo().num_tracked_points_face)]
     face_structure = (AnatomicalStructureBuilder()
-             .with_landmarks(face_landmark_names)
+             .with_tracked_points(face_landmark_names)
              .build()
     )
     face.add_anatomical_structure(face_structure)
@@ -33,7 +33,7 @@ def create_aspects_for_mediapipe_human():
     left_hand = Aspect(name = "left_hand")
     left_hand_landmark_names = [ f"left_{str(i).zfill(4)}" for i in range(MediapipeModelInfo().num_tracked_points_left_hand)]
     left_hand_structure = (AnatomicalStructureBuilder()
-                .with_landmarks(left_hand_landmark_names)
+                .with_tracked_points(left_hand_landmark_names)
                 .build()
         )
     left_hand.add_anatomical_structure(left_hand_structure)
@@ -42,7 +42,7 @@ def create_aspects_for_mediapipe_human():
     right_hand = Aspect(name = "right_hand")
     right_hand_landmark_names = [f"right_{str(i).zfill(4)}" for i in range(MediapipeModelInfo().num_tracked_points_right_hand)]
     right_hand_structure = (AnatomicalStructureBuilder()
-                .with_landmarks(right_hand_landmark_names)
+                .with_tracked_points(right_hand_landmark_names)
                 .build()
         )
     right_hand.add_anatomical_structure(right_hand_structure)

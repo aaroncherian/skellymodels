@@ -14,7 +14,7 @@ class Aspect:
     def add_anatomical_structure(self, anatomical_structure: AnatomicalStructure):
         self.anatomical_structure = anatomical_structure
 
-    def add_trajectories(self, name:str, 
+    def add_trajectory(self, name:str, 
                          data:np.ndarray, 
                          marker_names:List[str] = None,
                          virtual_marker_definitions:Dict = None,
@@ -25,11 +25,11 @@ class Aspect:
                                        virtual_marker_definitions=virtual_marker_definitions,
                                        segment_connections=segment_connections)
 
-    def add_landmark_trajectories(self, trajectory: np.ndarray):
-        """Add trajectories for basic landmarks, calculating virtual markers if defined"""
+    def add_tracked_points(self, tracked_points: np.ndarray):
+        """Add trajectories for tracked points, calculating virtual markers if defined"""
         self.trajectories['3d_xyz'] = Trajectory(name="3d_xyz",
-                                       data=trajectory,
-                                       marker_names = self.anatomical_structure.landmark_names,
+                                       data=tracked_points,
+                                       marker_names = self.anatomical_structure.tracked_point_names,
                                        virtual_marker_definitions=self.anatomical_structure.virtual_markers_definitions,
                                        segment_connections=self.anatomical_structure.segment_connections)
 

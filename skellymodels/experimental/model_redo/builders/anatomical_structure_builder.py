@@ -4,7 +4,7 @@ from typing import Optional, List, Dict, Union
 
 class AnatomicalStructureBuilder:
     def __init__(self):
-        self.landmark_names: Optional[List[str]] = None
+        self.tracked_point_names: Optional[List[str]] = None
         self.virtual_markers_definitions: Optional[Dict[str, Dict[str, List[Union[float, str]]]]] = None
         self.segment_connections: Optional[Dict[str, Dict[str, str]]] = None
         self.center_of_mass_definitions: Optional[Dict[str, Dict[str, float]]] = None
@@ -12,23 +12,23 @@ class AnatomicalStructureBuilder:
 
     @property
     def _marker_names(self):
-        if not self.landmark_names:
-            raise ValueError("Landmark names must be set before calling for a marker list.")
-        markers = self.landmark_names.copy()
+        if not self.tracked_point_names:
+            raise ValueError("Tracked point names must be set before calling for a marker list.")
+        markers = self.tracked_point_names.copy()
         if self.virtual_markers_definitions:
             markers.extend(self.virtual_markers_definitions.keys())
         return markers
 
-    def with_landmarks(self, landmark_names: List[str]):
-        LandmarkValidator(landmark_names=landmark_names)
-        self.landmark_names = landmark_names.copy()
+    def with_tracked_points(self, tracked_point_names: List[str]):
+        TrackedPointsValidator(tracked_point_names=tracked_point_names)
+        self.tracked_point_names = tracked_point_names.copy()
         return self
 
     def with_virtual_markers(self, virtual_marker_definitions: Dict[str, Dict[str, List[Union[float, str]]]]):
-        if not self.landmark_names:
-            raise ValueError("Landmark names must be set before adding virtual markers.")
+        if not self.tracked_point_names:
+            raise ValueError("Tracked point names must be set before adding virtual markers.")
         VirtualMarkerValidator(virtual_markers=virtual_marker_definitions,
-                               landmark_names=self.landmark_names)
+                               tracked_point_names=self.tracked_point_names)
         self.virtual_markers_definitions = virtual_marker_definitions
         return self
 
@@ -53,9 +53,9 @@ class AnatomicalStructureBuilder:
         return self
 
     def build(self):
-        if not self.landmark_names:
-            raise ValueError("Cannot build AnatomicalStructure without landmark names")
-        return AnatomicalStructure(landmark_names=self.landmark_names,
+        if not self.tracked_point_names:
+            raise ValueError("Cannot build AnatomicalStructure without tracked point names")
+        return AnatomicalStructure(tracked_point_names=self.tracked_point_names,
                                    virtual_markers_definitions=self.virtual_markers_definitions,
                                    segment_connections=self.segment_connections,
                                    center_of_mass_definitions=self.center_of_mass_definitions,
@@ -64,26 +64,26 @@ class AnatomicalStructureBuilder:
 
 
 
-class LandmarkValidator(BaseModel):
-    landmark_names: List[str]
+class TrackedPointsValidator(BaseModel):
+    tracked_point_names: List[str]
 
-    @field_validator("landmark_names")
+    @field_validator("tracked_point_names")
     @classmethod
-    def validate_landmark_names(cls, landmark_names: List[str]):
-        if not isinstance(landmark_names, list):
-            raise ValueError("Landmark names must be a list.")
-        if not all(isinstance(name, str) for name in landmark_names):
-            raise ValueError("All landmark names in list msut be strings.")
-        return landmark_names
+    def validate_tracked_point_names(cls, tracked_point_names: List[str]):
+        if not isinstance(tracked_point_names, list):
+            raise ValueError("Tracked point names must be a list.")
+        if not all(isinstance(name, str) for name in tracked_point_names):
+            raise ValueError("All tracked point names in list must be strings.")
+        return tracked_point_names
 
 class VirtualMarkerValidator(BaseModel):
     virtual_markers: Dict[str, Dict[str, List[Union[float, str]]]]
-    landmark_names: List[str]
+    tracked_point_names: List[str]
 
     @model_validator(mode="after")
     def validate_virtual_markers(self):
-        # Keep track of all valid marker names (landmarks + defined virtual markers)
-        valid_marker_names = set(self.landmark_names)
+        # Keep track of all valid marker names (tracked points + defined virtual markers)
+        valid_marker_names = set(self.tracked_point_names)
         
         # We need to validate virtual markers in order, as later ones might depend on earlier ones
         for virtual_marker_name, virtual_marker_values in self.virtual_markers.items():
@@ -109,7 +109,7 @@ class VirtualMarkerValidator(BaseModel):
             invalid_markers = [name for name in marker_names if name not in valid_marker_names]
             if invalid_markers:
                 raise ValueError(
-                    f"The following markers used in {virtual_marker_name} are not valid landmarks or previously "
+                    f"The following markers referenced in {virtual_marker_name} are not valid tracked points"
                     f"defined virtual markers: {invalid_markers}"
                 )
 
