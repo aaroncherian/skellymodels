@@ -1,6 +1,16 @@
 ---
 name: mediapipe
 tracker_name: MediapipeHolisticTracker
+
+#=================================
+# Aspect Order
+#=================================     
+order: 
+  - body
+  - right_hand
+  - left_hand
+  - face
+
 aspects:
   #=================================
   # Body Aspect Configuration
@@ -193,7 +203,7 @@ aspects:
       hips_center:
         - left_hip
         - right_hip
-        - trunk center
+        - trunk_center
       trunk_center:
         - neck_center
       neck_center:
@@ -271,6 +281,7 @@ aspects:
         - pinky_pip
         - pinky_dip
         - pinky_tip 
+
     virtual_marker_definitions: null
     segment_connections: null
     center_of_mass_definitions: null
@@ -304,6 +315,7 @@ aspects:
         - pinky_pip
         - pinky_dip
         - pinky_tip 
+
     virtual_marker_definitions: null
     segment_connections: null
     center_of_mass_definitions: null
@@ -324,14 +336,6 @@ aspects:
     center_of_mass_definitions: null
     joint_hierarchy: null
 
-#=================================
-# Aspect Order
-#=================================     
-order: 
-  - body
-  - right_hand
-  - left_hand
-  - face
 
     
 

@@ -25,30 +25,41 @@ class AnatomicalStructureBuilder:
         return self
 
     def with_virtual_markers(self, virtual_marker_definitions: Dict[str, Dict[str, List[Union[float, str]]]]):
-        if not self.tracked_point_names:
-            raise ValueError("Tracked point names must be set before adding virtual markers.")
-        VirtualMarkerValidator(virtual_markers=virtual_marker_definitions,
-                               tracked_point_names=self.tracked_point_names)
+        
+        if virtual_marker_definitions is not None:
+            if not self.tracked_point_names:
+                raise ValueError("Tracked point names must be set before adding virtual markers.")
+            
+            VirtualMarkerValidator(virtual_markers=virtual_marker_definitions,
+                                tracked_point_names=self.tracked_point_names)
         self.virtual_markers_definitions = virtual_marker_definitions
         return self
 
     def with_segment_connections(self, segment_connections: Dict[str, Dict[str, str]]):
-        SegmentConnectionsValidator(segment_connections=segment_connections,
-                                    marker_names=self._marker_names)
+
+        if segment_connections is not None:
+            SegmentConnectionsValidator(segment_connections=segment_connections,
+                                        marker_names=self._marker_names)
+                                        
         self.segment_connections = segment_connections
         return self
 
     def with_center_of_mass(self, center_of_mass_definitions: Dict[str, Dict[str, float]]):
-        if not self.segment_connections:
-            raise ValueError("Segment connections must be set before adding center of mass definitions")
-        CenterOfMassValidator(center_of_mass_definitions=center_of_mass_definitions,
-                                segment_connections=self.segment_connections)
+        
+        if center_of_mass_definitions is not None:
+            if not self.segment_connections:
+                raise ValueError("Segment connections must be set before adding center of mass definitions")
+            
+            CenterOfMassValidator(center_of_mass_definitions=center_of_mass_definitions,
+                                    segment_connections=self.segment_connections)
         self.center_of_mass_definitions = center_of_mass_definitions
         return self
     
     def with_joint_hierarchy(self,joint_hierarchy: Dict[str, List[str]]):
-        JointHierarchyValidator(joint_hierarchy=joint_hierarchy,
-                                marker_names=self._marker_names)
+        if joint_hierarchy is not None:
+            JointHierarchyValidator(joint_hierarchy=joint_hierarchy,
+                                    marker_names=self._marker_names)
+            
         self.joint_hierarchy = joint_hierarchy
         return self
 

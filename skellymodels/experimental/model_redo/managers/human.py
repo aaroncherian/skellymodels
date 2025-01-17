@@ -25,7 +25,7 @@ class Human(Actor):
         super().__init__(name)
         self.config = configuration
 
-        self.structures = create_anatomical_structure_factory(self.config).create_structures()
+        self.structures = create_anatomical_structure_factory(self.config.tracker_type).create_structures()
         
         self._initialize_aspects()
 
