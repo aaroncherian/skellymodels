@@ -1,9 +1,10 @@
 from skellymodels.experimental.model_redo.models.aspect import Aspect
+from typing import Dict
 
 class Actor:
     def __init__(self, name: str):
         self.name = name
-        self.aspects = {}
+        self.aspects: Dict[str, Aspect] = {}
 
     def __getitem__(self, key: str):
         return self.aspects[key]

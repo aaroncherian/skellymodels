@@ -1,15 +1,15 @@
 from skellymodels.experimental.model_redo.models.anatomical_structure import AnatomicalStructure
 from skellymodels.experimental.model_redo.models.trajectory import Trajectory
 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 import numpy as np
 
 class Aspect:
     def __init__(self, name:str):
         self.name = name
-        self.anatomical_structure = {}
-        self.trajectories = {}
-        self.metadata = {}
+        self.anatomical_structure: Optional[AnatomicalStructure] = None
+        self.trajectories: Dict[str, Trajectory] = {}
+        self.metadata: Dict[str, Any] = {}
 
     def add_anatomical_structure(self, anatomical_structure: AnatomicalStructure):
         self.anatomical_structure = anatomical_structure
