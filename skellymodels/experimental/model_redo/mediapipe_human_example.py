@@ -1,6 +1,5 @@
 from pathlib import Path
 import numpy as np
-import pandas as pd
 
 from skellymodels.experimental.model_redo.managers.human import Human
 
@@ -23,7 +22,7 @@ human = Human(
             )
 
 human.from_tracked_points_numpy(tracked_points_numpy_array=data)
-pprint([human.aspects.values()])
+pprint([human.aspects])
 
 # Calculate center of mass 
 for aspect in human.aspects.values():

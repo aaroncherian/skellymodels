@@ -21,21 +21,22 @@ class Human(Actor):
         super().__init__(name)
         
         self.tracker = model_info.name
-        self.aspect_order = model_info.aspect_order
+        self.aspect_order = model_info.aspect_order_and_slices
         self.structures = create_anatomical_structure(model_info=model_info)
         
-        self._initialize_aspects(model_info)
+        self._initialize_aspects()
+        f = 2
 
-    def _initialize_aspects(self, model_info:ModelInfo):
+    def _initialize_aspects(self):
         self._add_body()
 
-        if HumanAspectNames.FACE.value in model_info.aspect_order:
+        if HumanAspectNames.FACE.value in self.aspect_order.keys():
             self._add_face()
 
-        if HumanAspectNames.LEFT_HAND.value in model_info.aspect_order:
+        if HumanAspectNames.LEFT_HAND.value in self.aspect_order.keys():
             self._add_left_hand()
         
-        if HumanAspectNames.RIGHT_HAND.value in model_info.aspect_order:
+        if HumanAspectNames.RIGHT_HAND.value in self.aspect_order.keys():
             self._add_right_hand()
 
     def _add_body(self):
@@ -76,14 +77,15 @@ class Human(Actor):
         return self.aspects.get(HumanAspectNames.RIGHT_HAND.value)
 
     def from_tracked_points_numpy(self, tracked_points_numpy_array:np.ndarray):
-        data_split_by_category = split_data(tracked_points_numpy_array)
+        self.body.add_tracked_points(tracked_points_numpy_array[:,self.aspect_order[HumanAspectNames.BODY.value],:])
 
-        self.body.add_tracked_points(data_split_by_category['pose_landmarks'])
+        if HumanAspectNames.FACE.value in self.aspect_order.keys():
+            self.face.add_tracked_points(tracked_points_numpy_array[:,self.aspect_order[HumanAspectNames.FACE.value],:])
 
-        if self.config.include_face:
-            self.face.add_tracked_points(data_split_by_category['face_landmarks'])
+        if HumanAspectNames.LEFT_HAND.value in self.aspect_order.keys():
+            self.left_hand.add_tracked_points(tracked_points_numpy_array[:,self.aspect_order[HumanAspectNames.LEFT_HAND.value],:])
         
-        if self.config.include_hands:
-            self.left_hand.add_tracked_points(data_split_by_category['left_hand_landmarks'])
-            self.right_hand.add_tracked_points(data_split_by_category['right_hand_landmarks'])
+        if HumanAspectNames.RIGHT_HAND.value in self.aspect_order.keys():
+            self.right_hand.add_tracked_points(tracked_points_numpy_array[:,self.aspect_order[HumanAspectNames.RIGHT_HAND.value],:])
+
 

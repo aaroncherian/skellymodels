@@ -93,6 +93,9 @@ class ModelInfo:
         return aspects
     
     def _get_aspect_order_and_slices(self, config):
+        """
+        Get the proper order of every aspect included in the model info and how to slice it from a numpy array and put it into a dict
+        """
         aspect_order_and_slices = {}
         current_index = 0
         for aspect in config['order']:
