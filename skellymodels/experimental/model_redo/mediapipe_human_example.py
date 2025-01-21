@@ -30,14 +30,9 @@ for aspect in human.aspects.values():
         print('Calculating center of mass for aspect:', aspect.name)
         total_body_com, segment_com = calculate_center_of_mass_from_trajectory(aspect.trajectories['3d_xyz'], aspect.anatomical_structure.center_of_mass_definitions)
 
-        aspect.add_trajectory(name = 'total_body_com',
-                                data = total_body_com,
-                                marker_names = ['total_body'])
-        
-        aspect.add_trajectory(name = 'segment_com',
-                                data = segment_com,
-                                marker_names = list(aspect.anatomical_structure.center_of_mass_definitions.keys()))
-        
+        aspect.add_total_body_center_of_mass(total_body_center_of_mass=total_body_com)
+        aspect.add_segment_center_of_mass(segment_center_of_mass=segment_com)
+    
     else:
         print('Skipping center of mass calculation for aspect:', aspect.name)
 pprint([human.aspects.values()])

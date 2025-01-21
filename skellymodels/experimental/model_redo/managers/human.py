@@ -3,11 +3,7 @@ import numpy as np
 
 from skellymodels.experimental.model_redo.models.aspect import Aspect
 from skellymodels.experimental.model_redo.managers.actor import Actor
-from skellymodels.experimental.model_redo.managers.anatomical_structure_factory import create_anatomical_structure
-
-from dataclasses import dataclass
-
-from skellymodels.experimental.model_redo.utils.create_mediapipe_actor import split_data
+from skellymodels.experimental.model_redo.builders.anatomical_structure_builder import create_anatomical_structure_from_model_info
 from skellymodels.experimental.model_redo.tracker_info.model_info import ModelInfo
 class HumanAspectNames(Enum):
     BODY = "body"
@@ -22,12 +18,15 @@ class Human(Actor):
         
         self.tracker = model_info.name
         self.aspect_order = model_info.aspect_order_and_slices
-        self.structures = create_anatomical_structure(model_info=model_info)
+        self.structures = create_anatomical_structure_from_model_info(model_info=model_info)
         
         self._initialize_aspects()
-        f = 2
 
     def _initialize_aspects(self):
+        """
+        Initializes the predefined anatomical aspects (body, face, hands) for the Human instance.
+        Aspects are added based on the configuration provided in the ModelInfo instance.
+        """
         self._add_body()
 
         if HumanAspectNames.FACE.value in self.aspect_order.keys():
@@ -77,6 +76,10 @@ class Human(Actor):
         return self.aspects.get(HumanAspectNames.RIGHT_HAND.value)
 
     def from_tracked_points_numpy(self, tracked_points_numpy_array:np.ndarray):
+        """
+        Takes in the tracked points array, splits and categorizes it based on the ranges determined by the ModelInfo,
+        and adds it as a tracked point Trajectory to the body, and optionally face/hands aspects 
+        """
         self.body.add_tracked_points(tracked_points_numpy_array[:,self.aspect_order[HumanAspectNames.BODY.value],:])
 
         if HumanAspectNames.FACE.value in self.aspect_order.keys():

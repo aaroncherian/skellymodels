@@ -33,6 +33,18 @@ class Aspect:
                                        virtual_marker_definitions=self.anatomical_structure.virtual_markers_definitions,
                                        segment_connections=self.anatomical_structure.segment_connections)
 
+    def add_total_body_center_of_mass(self, total_body_center_of_mass: np.ndarray):
+        self.trajectories['total_body_com'] = Trajectory(name = 'total_body_com',
+                                                         data = total_body_center_of_mass,
+                                                         marker_names = ['total_body_com']
+                                                         )
+        
+    def add_segment_center_of_mass(self, segment_center_of_mass:np.ndarray):
+        self.trajectories['segment_com'] = Trajectory(name = 'segment_com',
+                                                      data = segment_center_of_mass,
+                                                      marker_names = list(self.anatomical_structure.center_of_mass_definitions.keys()))
+
+
     def add_metadata(self, metadata: Dict[str, Any]):
         self.metadata.update(metadata)
 
