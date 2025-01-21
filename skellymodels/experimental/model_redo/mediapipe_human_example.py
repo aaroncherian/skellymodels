@@ -2,21 +2,25 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from skellymodels.experimental.model_redo.managers.human import Human, HumanConfiguration
+from skellymodels.experimental.model_redo.managers.human import Human
 
 from skellymodels.experimental.model_redo.fmc_anatomical_pipeline.calculate_center_of_mass import calculate_center_of_mass_from_trajectory
 from skellymodels.experimental.model_redo.fmc_anatomical_pipeline.enforce_rigid_bones import enforce_rigid_bones_from_trajectory
 from pprint import pprint
+
+from skellymodels.experimental.model_redo.tracker_info.model_info import MediapipeModelInfo
+
+model_info = MediapipeModelInfo()
 
 ## Choose a path to the directory 
 path_to_data = Path(r"C:\Users\aaron\FreeMocap_Data\recording_sessions\freemocap_sample_data\output_data\raw_data\mediapipe_3dData_numFrames_numTrackedPoints_spatialXYZ.npy")
 data = np.load(path_to_data)
 
 ## Create an Actor
-human = Human(name="human_one", 
-              configuration=HumanConfiguration(tracker_type='mediapipe', 
-                                               include_face=True, 
-                                               include_hands=True))
+human = Human(
+            name="human_one", 
+            model_info=model_info
+            )
 
 human.from_tracked_points_numpy(tracked_points_numpy_array=data)
 pprint([human.aspects.values()])

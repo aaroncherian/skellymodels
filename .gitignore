@@ -158,3 +158,18 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+freemocap_data_by_frame.csv
+mediapipe_body_3d_xyz.csv
+mediapipe_body_3d_xyz.npy
+mediapipe_body_rigid_3d_xyz.csv
+mediapipe_body_rigid_3d_xyz.npy
+mediapipe_body_segment_com.csv
+mediapipe_body_segment_com.npy
+mediapipe_body_total_body_com.csv
+mediapipe_body_total_body_com.npy
+mediapipe_face_3d_xyz.csv
+mediapipe_face_3d_xyz.npy
+mediapipe_left_hand_3d_xyz.csv
+mediapipe_left_hand_3d_xyz.npy
+mediapipe_right_hand_3d_xyz.csv
+mediapipe_right_hand_3d_xyz.npy
