@@ -108,8 +108,7 @@ class ModelInfo:
 
 class MediapipeModelInfo(ModelInfo):
     def __init__(self):
-        super().__init__(config_path = Path.cwd()/'skellymodels'/'experimental'/'model_redo'/'tracker_info'/'mediapipe_info.yaml')
-
+        super().__init__(config_path = Path(__file__).parent/'mediapipe_info.yaml')
 
 
 
