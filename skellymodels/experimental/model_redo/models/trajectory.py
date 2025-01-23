@@ -141,5 +141,10 @@ class Trajectory:
     def get_frame(self, frame_number: int):
         return {marker_name: trajectory[frame_number] for marker_name, trajectory in self._trajectories.items()}
 
-    
+    def __str__(self) -> str:
+
+        return f"Trajectory with {self._num_frames} frames and {len(self._marker_names)} markers"
+
+    def __repr__(self) -> str:
+        return self.__str__()
 
