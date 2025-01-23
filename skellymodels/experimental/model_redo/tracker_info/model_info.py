@@ -13,47 +13,6 @@ class AspectInfo:
     center_of_mass_definitions: Optional[Dict[str, Dict[str, float]]] = None
     joint_hierarchy: Optional[Dict[str, List[str]]] = None
 
-# class ModelInfo:
-#     def __init__(self, config_path: Union[str, Path]):
-#         config_path = Path(config_path)
-
-#         with open(config_path, 'r') as f:
-#             config = yaml.safe_load(f)
-
-#         self.name = config['name']
-#         self.tracker_name = config['tracker_name']
-
-#         self.aspects: Dict[str, Dict ] = {}
-
-#         for aspect_name, aspect_info in config['aspects'].items():
-#             #handle tracked points names based on method specified in yaml
-#             if aspect_info['tracked_points']['type'] == 'list':
-#                 tracked_points_names = aspect_info['tracked_points']['names']
-#             elif aspect_info['tracked_points']['type'] == 'pattern':
-#                 naming_convention = aspect_info['tracked_points']['names']['convention']
-#                 count = aspect_info['tracked_points']['names']['count']
-#                 tracked_points_names = [naming_convention.format(i) for i in range(count)]
-            
-#             self.aspects[aspect_name] = AspectInfo(
-#                 tracked_points_names = tracked_points_names,
-#                 num_tracked_points= len(tracked_points_names),
-#                 virtual_marker_definitions = aspect_info.get('virtual_marker_definitions'),
-#                 segment_connections = aspect_info.get('segment_connections'),
-#                 center_of_mass_definitions = aspect_info.get('center_of_mass_definitions'),
-#                 joint_hierarchy = aspect_info.get('joint_hierarchy')
-#             )
-        
-#         self.tracked_point_names = [tp for aspect in self.aspects.values() for tp in aspect.tracked_points_names]
-#         self.num_tracked_points = sum([aspect.num_tracked_points for aspect in self.aspects.values()])
-
-
-#         self.aspect_order_and_slices = {}
-#         current_index = 0
-#         for aspect in config['order']:
-#             self.aspect_order_and_slices[aspect] = slice(current_index, current_index + self.aspects[aspect].num_tracked_points)
-#             current_index = current_index + self.aspects[aspect].num_tracked_points
-
-
 class ModelInfo:
     def __init__(self, config_path: Union[str, Path]):
         config_path = Path(config_path)
