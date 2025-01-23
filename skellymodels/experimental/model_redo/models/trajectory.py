@@ -17,6 +17,28 @@ class TrajectoryValidator(BaseModel):
     
 
 class Trajectory:
+    """
+    A container for 3D motion capture trajectory data that handles both tracked markers 
+    and derived virtual markers.
+
+    The Trajectory class manages time-series 3D position data for a set of markers, supporting
+    both directly tracked markers and calculated virtual markers. It provides methods to access
+    the data in various formats (dictionary, numpy array, pandas DataFrame) and can compute
+    virtual marker positions based on weighted combinations of tracked markers.
+
+    Attributes:
+        name (str): Identifier for this trajectory set
+        _trajectories (Dict[str, np.ndarray]): Dictionary mapping marker names to their position data
+            over time with shape (num_frames, 3)
+        _landmark_names (List[str]): Names of the all tracked points (need to firm up some of these naming conventions)
+         _marker_names (List[str]): Names of all markers (tracked + virtual) (repeated note about firming up naming conventions)
+        _virtual_marker_definitions (Optional[Dict]): Definitions for calculating virtual markers
+            from tracked markers using weighted combinations
+        _segment_connections (Optional[Dict]): Definitions of segments connecting pairs of markers
+        _num_frames (int): Total number of frames in the trajectory data
+
+    """
+
     def __init__(self, name: str, 
                  data: np.ndarray, 
                  marker_names: List[str], 

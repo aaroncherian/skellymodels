@@ -3,6 +3,12 @@ from typing import Dict, List, Optional, Union
 
 @dataclass
 class AnatomicalStructure:
+    """A data class representing the anatomical structure of a tracked object, defining its
+    landmarks, virtual markers, segments, and center of mass definitions and joint hierarchy. 
+    The latter three are used in calculating center of mass and enforcing rigid bones for the object.
+
+    The structure itself is built by the AnatomicalStructureBuilder.
+    """
     tracked_point_names: List[str]
     virtual_markers_definitions: Optional[Dict[str, Dict[str, List[Union[float, str]]]]] = None
     segment_connections: Optional[Dict[str, Dict[str, str]]] = None

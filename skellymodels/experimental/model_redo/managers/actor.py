@@ -2,6 +2,9 @@ from skellymodels.experimental.model_redo.models.aspect import Aspect
 from typing import Dict
 
 class Actor:
+    """
+    The Actor class is a container for multiple Aspects of a single person/creature/object that we track in 3D.
+    """
     def __init__(self, name: str):
         self.name = name
         self.aspects: Dict[str, Aspect] = {}

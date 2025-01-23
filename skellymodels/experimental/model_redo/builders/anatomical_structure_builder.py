@@ -5,6 +5,13 @@ from pydantic import BaseModel, field_validator, model_validator
 from typing import Optional, List, Dict, Union
 
 class AnatomicalStructureBuilder:
+    """
+        A builder class that constructs AnatomicalStructure instances from data defined in the model info. 
+
+        This builder ensures that anatomical structures are created with proper validation and
+        dependency checking between components (e.g., virtual markers require tracked points to exist).
+
+    """
     def __init__(self):
         self.tracked_point_names: Optional[List[str]] = None
         self.virtual_markers_definitions: Optional[Dict[str, Dict[str, List[Union[float, str]]]]] = None

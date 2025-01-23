@@ -5,6 +5,19 @@ from typing import Dict, Any, List, Optional
 import numpy as np
 
 class Aspect:
+    """
+    An Aspect represents a distinct component of a tracked object (e.g., body, face, hand) containing 
+    the anatomical structure and 3D data for that tracked object. It handles structural definitions (through AnatomicalStructure), 
+    and using those definitions to turn 3d data into Trajectories.
+
+    Attributes:
+        name (str): Identifier for the aspect (e.g., "body", "face", "left_hand")
+        anatomical_structure (Optional[AnatomicalStructure]): Defines the structural properties like 
+            landmarks, virtual markers, segments, and center of mass definitions
+        trajectories (Dict[str, Trajectory]): Collection of named trajectory data sets
+        metadata (Dict[str, Any]): Additional information about the aspect
+    """
+
     def __init__(self, name:str):
         self.name = name
         self.anatomical_structure: Optional[AnatomicalStructure] = None
@@ -19,6 +32,7 @@ class Aspect:
                          marker_names:List[str] = None,
                          virtual_marker_definitions:Dict = None,
                          segment_connections:Dict = None):
+        """Add a trajectory to the aspect"""
         self.trajectories[name] = Trajectory(name=name,
                                        data=data,
                                        marker_names = marker_names,
@@ -26,7 +40,7 @@ class Aspect:
                                        segment_connections=segment_connections)
 
     def add_tracked_points(self, tracked_points: np.ndarray):
-        """Add trajectories for tracked points, calculating virtual markers if defined"""
+        """Use tracked points to calculate trajectories, using virtual markers if included"""
         self.trajectories['3d_xyz'] = Trajectory(name="3d_xyz",
                                        data=tracked_points,
                                        marker_names = self.anatomical_structure.tracked_point_names,
