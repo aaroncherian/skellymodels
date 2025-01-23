@@ -63,7 +63,25 @@ right_hand.add_tracker_type("mediapipe")
 
 ### SPLIT 3D DATA 
 # split data into body/hands/face based off of old model info
-data_split_by_category = split_data(data)
+tracked_object_names = MediapipeModelInfo.tracked_object_names
+face_landmark_names = [str(i).zfill(4) for i in range(MediapipeModelInfo().num_tracked_points_face)]
+
+lengths = [
+    len(MediapipeModelInfo.body_landmark_names), 
+    len(MediapipeModelInfo.hand_landmark_names), 
+    len(MediapipeModelInfo.hand_landmark_names),
+    len(face_landmark_names)         
+]
+
+# Generate slices for each category
+current_index = 0
+slices = {}
+for name, length in zip(tracked_object_names, lengths):
+    slices[name] = slice(current_index, current_index + length)
+    current_index += length
+
+# Split the data using slices
+data_split_by_category = {name: data[:,slc,:] for name, slc in slices.items()}
 
 body.add_tracked_points(data_split_by_category['pose_landmarks'])
 face.add_tracked_points(data_split_by_category['face_landmarks'])
