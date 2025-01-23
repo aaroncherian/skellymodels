@@ -16,7 +16,7 @@ class Actor:
         self.aspects[aspect.name] = aspect
 
     def get_data(self, aspect_name:str, type:str):
-        return self.aspects[aspect_name].trajectories[type].trajectories
+        return self.aspects[aspect_name].trajectories[type].data
 
     def get_marker_data(self, aspect_name:str, type:str, marker_name:str):
         return self.aspects[aspect_name].trajectories[type].get_marker(marker_name)
