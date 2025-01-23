@@ -14,6 +14,17 @@ class AspectInfo:
     joint_hierarchy: Optional[Dict[str, List[str]]] = None
 
 class ModelInfo:
+    """
+    A class that loads and parses motion capture model configuration from YAML files.
+    Attributes:
+       name (str): Name identifier for this model
+       tracker_name (str): Type/name of the motion capture tracker
+       aspects (Dict[str, AspectInfo]): Information about each aspect (body, face, hands, etc.)
+       tracked_point_names (List[str]): Combined list of all tracked point names
+       num_tracked_points (int): Total number of tracked points across all aspects
+       aspect_order_and_slices (Dict[str, slice]): How to slice numpy arrays by aspect
+
+    """
     def __init__(self, config_path: Union[str, Path]):
         config_path = Path(config_path)
         config = self._load_config(config_path)
@@ -32,10 +43,10 @@ class ModelInfo:
     def _parse_aspects(self, config):
         aspects = {}
         for aspect_name, aspect_info in config['aspects'].items():
-            #handle tracked points names based on method specified in yaml
+            # Handle different ways of naming tracked points (names provided in a list vs. generating identifiers)
             if aspect_info['tracked_points']['type'] == 'list':
                 tracked_points_names = aspect_info['tracked_points']['names']
-            elif aspect_info['tracked_points']['type'] == 'pattern':
+            elif aspect_info['tracked_points']['type'] == 'generated':
                 naming_convention = aspect_info['tracked_points']['names']['convention']
                 count = aspect_info['tracked_points']['names']['count']
                 tracked_points_names = [naming_convention.format(i) for i in range(count)]
