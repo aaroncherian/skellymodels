@@ -326,7 +326,7 @@ aspects:
   #=================================  
   face:
     tracked_points:
-      type: pattern
+      type: generated
       names: 
         convention: face_{:04d}
         count: 478
