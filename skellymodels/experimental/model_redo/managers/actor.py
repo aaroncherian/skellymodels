@@ -5,6 +5,7 @@ class Actor:
     """
     The Actor class is a container for multiple Aspects of a single person/creature/object that we track in 3D.
     """
+    # TODO: should this be an abstract base class, with abstract methods like "from_numpy_array"?
     def __init__(self, name: str):
         self.name = name
         self.aspects: Dict[str, Aspect] = {}

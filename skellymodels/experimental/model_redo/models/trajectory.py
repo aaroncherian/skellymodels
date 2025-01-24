@@ -42,8 +42,8 @@ class Trajectory:
     def __init__(self, name: str, 
                  data: np.ndarray, 
                  marker_names: List[str], 
-                 virtual_marker_definitions: Dict = None, 
-                 segment_connections: Dict = None):
+                 virtual_marker_definitions: Dict | None = None, 
+                 segment_connections: Dict | None = None):
         self.name = name
         self._trajectories = {}
         self._landmark_names = marker_names

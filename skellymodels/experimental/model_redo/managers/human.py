@@ -39,27 +39,31 @@ class Human(Actor):
             self._add_right_hand()
 
     def _add_body(self):
-        body = Aspect(name = HumanAspectNames.BODY.value)
-        body.add_metadata({"tracker_type": self.tracker})
-        body.add_anatomical_structure(self.structures[HumanAspectNames.BODY.value])
+        body = Aspect(
+            name = HumanAspectNames.BODY.value,
+            anatomical_structure = self.structures[HumanAspectNames.BODY.value],
+            metadata = {"tracker_type": self.tracker})
         self.add_aspect(body)
     
     def _add_face(self):
-        face = Aspect(name = HumanAspectNames.FACE.value)
-        face.add_metadata({"tracker_type": self.tracker})
-        face.add_anatomical_structure(self.structures[HumanAspectNames.FACE.value])
+        face = Aspect(
+            name = HumanAspectNames.FACE.value,
+            anatomical_structure = self.structures[HumanAspectNames.FACE.value],
+            metadata = {"tracker_type": self.tracker})
         self.add_aspect(face)
 
     def _add_left_hand(self):
-        left_hand = Aspect(name = HumanAspectNames.LEFT_HAND.value)
-        left_hand.add_metadata({"tracker_type": self.tracker})
-        left_hand.add_anatomical_structure(self.structures[HumanAspectNames.LEFT_HAND.value])
+        left_hand = Aspect(
+            name = HumanAspectNames.LEFT_HAND.value,
+            anatomical_structure = self.structures[HumanAspectNames.LEFT_HAND.value],
+            metadata = {"tracker_type": self.tracker})
         self.add_aspect(left_hand)
 
     def _add_right_hand(self):
-        right_hand = Aspect(name = HumanAspectNames.RIGHT_HAND.value)
-        right_hand.add_metadata({"tracker_type": self.tracker})
-        right_hand.add_anatomical_structure(self.structures[HumanAspectNames.RIGHT_HAND.value])
+        right_hand = Aspect(
+            name = HumanAspectNames.RIGHT_HAND.value,
+            anatomical_structure = self.structures[HumanAspectNames.RIGHT_HAND.value],
+            metadata = {"tracker_type": self.tracker})
         self.add_aspect(right_hand)
 
     @property
@@ -75,20 +79,29 @@ class Human(Actor):
     def right_hand(self):
         return self.aspects.get(HumanAspectNames.RIGHT_HAND.value)
 
-    def from_tracked_points_numpy(self, tracked_points_numpy_array:np.ndarray):
+    def add_tracked_points_numpy(self, tracked_points_numpy_array:np.ndarray):
         """
         Takes in the tracked points array, splits and categorizes it based on the ranges determined by the ModelInfo,
         and adds it as a tracked point Trajectory to the body, and optionally face/hands aspects 
         """
         self.body.add_tracked_points(tracked_points_numpy_array[:,self.aspect_order[HumanAspectNames.BODY.value],:])
 
-        if HumanAspectNames.FACE.value in self.aspect_order.keys():
+        if HumanAspectNames.FACE.value in self.aspect_order.keys() and self.face is not None:
             self.face.add_tracked_points(tracked_points_numpy_array[:,self.aspect_order[HumanAspectNames.FACE.value],:])
 
-        if HumanAspectNames.LEFT_HAND.value in self.aspect_order.keys():
+        if HumanAspectNames.LEFT_HAND.value in self.aspect_order.keys() and self.left_hand is not None:
             self.left_hand.add_tracked_points(tracked_points_numpy_array[:,self.aspect_order[HumanAspectNames.LEFT_HAND.value],:])
         
-        if HumanAspectNames.RIGHT_HAND.value in self.aspect_order.keys():
+        if HumanAspectNames.RIGHT_HAND.value in self.aspect_order.keys() and self.right_hand is not None:
             self.right_hand.add_tracked_points(tracked_points_numpy_array[:,self.aspect_order[HumanAspectNames.RIGHT_HAND.value],:])
+
+    @classmethod
+    def from_numpy_array(cls, name:str, model_info:ModelInfo, tracked_points_numpy_array:np.ndarray):
+        """
+        Takes in a numpy array of tracked points and returns a Human object with the tracked points added in aspects
+        """
+        human = cls(name=name, model_info=model_info)
+        human.add_tracked_points_numpy(tracked_points_numpy_array=tracked_points_numpy_array)
+        return human
 
 
