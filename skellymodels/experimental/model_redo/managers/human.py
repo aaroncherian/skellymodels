@@ -15,6 +15,7 @@ class HumanAspectNames(Enum):
 class Human(Actor):
     def __init__(self, name: str, model_info:ModelInfo):
         super().__init__(name)
+        self.actor_type = "human"
         
         self.tracker = model_info.name
         self.aspect_order = model_info.aspect_order_and_slices
@@ -94,14 +95,3 @@ class Human(Actor):
         
         if HumanAspectNames.RIGHT_HAND.value in self.aspect_order.keys() and self.right_hand is not None:
             self.right_hand.add_tracked_points(tracked_points_numpy_array[:,self.aspect_order[HumanAspectNames.RIGHT_HAND.value],:])
-
-    @classmethod
-    def from_numpy_array(cls, name:str, model_info:ModelInfo, tracked_points_numpy_array:np.ndarray):
-        """
-        Takes in a numpy array of tracked points and returns a Human object with the tracked points added in aspects
-        """
-        human = cls(name=name, model_info=model_info)
-        human.add_tracked_points_numpy(tracked_points_numpy_array=tracked_points_numpy_array)
-        return human
-
-

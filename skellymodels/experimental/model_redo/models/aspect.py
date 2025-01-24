@@ -24,17 +24,18 @@ class Aspect:
         self.name = name
         self.anatomical_structure: Optional[AnatomicalStructure] = anatomical_structure
         self.trajectories: Dict[str, Trajectory] = {} if trajectories is None else trajectories  # TODO: the string keys make this clunky to use. If we "expect" to have 3d_xyz, total_body_com, and segment_com, could use an Enum
+        self.reprojection_error: Optional[float] = None  # TODO: figure out how it makes sense to add this
         self.metadata: Dict[str, Any] = {} if metadata is None else metadata  # TODO: Is it worth making a data class for this? Will we always want tracker type named or is it optional?
 
     def add_anatomical_structure(self, anatomical_structure: AnatomicalStructure):
         # TODO: should this be added after initialization? or will we ever intialize without an anatomical structure?
         self.anatomical_structure = anatomical_structure
 
-    def add_trajectory(self, name:str, 
-                         data:np.ndarray, 
-                         marker_names:List[str],  # it looks like this can't actually be None, it will fail the Trajectory Validator
-                         virtual_marker_definitions:Dict | None = None,
-                         segment_connections:Dict | None = None):
+    def add_trajectory(self, name: str, 
+                         data: np.ndarray, 
+                         marker_names: List[str],  # it looks like this can't actually be None, it will fail the Trajectory Validator
+                         virtual_marker_definitions: Dict | None = None,
+                         segment_connections: Dict | None = None):
         """Add a trajectory to the aspect"""
         self.trajectories[name] = Trajectory(name=name,
                                        data=data,

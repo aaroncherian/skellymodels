@@ -73,7 +73,7 @@ class Trajectory:
             self._trajectories.update(virtual_marker_data)
 
     @property
-    def data(self):
+    def data(self):  # TODO: elsewhere this is used for the numpy array, but here its a dictionary 
         return self._trajectories
 
     @property
