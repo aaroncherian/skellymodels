@@ -101,6 +101,10 @@ class Trajectory:
         return segment_positions
     
     @property
+    def landmark_names(self):
+        return self._landmark_names
+    
+    @property
     def num_frames(self):
         return self._num_frames
     

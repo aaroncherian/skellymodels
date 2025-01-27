@@ -34,6 +34,12 @@ class Actor(ABC):
     def get_frame(self, aspect_name:str, type:str, frame_number:int):
         return self.aspects[aspect_name].trajectories[type].get_frame(frame_number)
     
+    def get_error_marker(self, aspect_name:str, marker_name:str):
+        return self.aspects[aspect_name].reprojection_error.get_marker(marker_name) if self.aspects[aspect_name].reprojection_error else None
+    
+    def get_error_frame(self, aspect_name:str, frame_number:int):
+        return self.aspects[aspect_name].reprojection_error.get_frame(frame_number) if self.aspects[aspect_name].reprojection_error else None
+    
     @abstractmethod
     def add_tracked_points_numpy(self, tracked_points_numpy_array: np.ndarray):
         """
@@ -55,7 +61,7 @@ class Actor(ABC):
         for aspect in self.aspects.values():
             for trajectory in aspect.trajectories.values():
                 print('Saving out numpy:', aspect.metadata['tracker_type'], aspect.name, trajectory.name)
-                np.save(f"{aspect.metadata['tracker_type']}_{aspect.name}_{trajectory.name}.npy", trajectory.data)  # TODO: the .data is hrowing a type error because this is sometimes a dict instead of an array
+                np.save(f"{aspect.metadata['tracker_type']}_{aspect.name}_{trajectory.name}.npy", trajectory.data)  # TODO: the .data is throwing a type error because this is sometimes a dict instead of an array
 
     def save_out_csv_data(self):
         for aspect in self.aspects.values():
@@ -74,6 +80,12 @@ class Actor(ABC):
                 
                 # Add metadata column for model
                 trajectory_df['model'] = f"{aspect.metadata['tracker_type']}_{aspect_name}"
+
+                # # Add error column
+                # if aspect.reprojection_error is None:
+                #     trajectory_df['reprojection_error'] = np.nan
+                # else:
+                #     trajectory_df['reprojection_error'] = aspect.reprojection_error.as_numpy
                 
                 # Append DataFrame to the list
                 all_data.append(trajectory_df)

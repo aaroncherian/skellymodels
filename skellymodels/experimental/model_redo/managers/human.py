@@ -95,3 +95,15 @@ class Human(Actor):
         
         if HumanAspectNames.RIGHT_HAND.value in self.aspect_order.keys() and self.right_hand is not None:
             self.right_hand.add_tracked_points(tracked_points_numpy_array[:,self.aspect_order[HumanAspectNames.RIGHT_HAND.value],:])
+
+    def add_reprojection_error_numpy(self, reprojection_error_data: np.ndarray):
+        self.body.add_reprojection_error(reprojection_error_data[:,self.aspect_order[HumanAspectNames.BODY.value]])
+
+        if HumanAspectNames.FACE.value in self.aspect_order.keys() and self.face is not None:
+            self.face.add_reprojection_error(reprojection_error_data[:,self.aspect_order[HumanAspectNames.FACE.value]])
+        
+        if HumanAspectNames.LEFT_HAND.value in self.aspect_order.keys() and self.left_hand is not None:
+            self.left_hand.add_reprojection_error(reprojection_error_data[:,self.aspect_order[HumanAspectNames.LEFT_HAND.value]])
+
+        if HumanAspectNames.RIGHT_HAND.value in self.aspect_order.keys() and self.right_hand is not None:
+            self.right_hand.add_reprojection_error(reprojection_error_data[:,self.aspect_order[HumanAspectNames.RIGHT_HAND.value]])

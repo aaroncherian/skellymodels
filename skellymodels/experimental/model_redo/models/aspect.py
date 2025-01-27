@@ -1,6 +1,7 @@
 from skellymodels.experimental.model_redo.fmc_anatomical_pipeline.calculate_center_of_mass import calculate_center_of_mass_from_trajectory
 from skellymodels.experimental.model_redo.fmc_anatomical_pipeline.enforce_rigid_bones import enforce_rigid_bones_from_trajectory
 from skellymodels.experimental.model_redo.models.anatomical_structure import AnatomicalStructure
+from skellymodels.experimental.model_redo.models.error import Error
 from skellymodels.experimental.model_redo.models.trajectory import Trajectory
 
 from typing import Dict, Any, List, Optional
@@ -24,7 +25,7 @@ class Aspect:
         self.name = name
         self.anatomical_structure: Optional[AnatomicalStructure] = anatomical_structure
         self.trajectories: Dict[str, Trajectory] = {} if trajectories is None else trajectories  # TODO: the string keys make this clunky to use. If we "expect" to have 3d_xyz, total_body_com, and segment_com, could use an Enum
-        self.reprojection_error: Optional[float] = None  # TODO: figure out how it makes sense to add this
+        self.reprojection_error: Optional[Error] = None  # TODO: figure out how it makes sense to add this
         self.metadata: Dict[str, Any] = {} if metadata is None else metadata  # TODO: Is it worth making a data class for this? Will we always want tracker type named or is it optional?
 
     def add_anatomical_structure(self, anatomical_structure: AnatomicalStructure):
@@ -66,6 +67,18 @@ class Aspect:
                                                       data = segment_center_of_mass,
                                                       marker_names = list(self.anatomical_structure.center_of_mass_definitions.keys()))
 
+    def add_reprojection_error(self, reprojection_error_data: np.ndarray):
+        # TODO: This could be a feature of the trajectory as well, but I'm leaning towards aspect taking care of it
+        if self.trajectories.get('3d_xyz') is not None:
+            if reprojection_error_data.shape[0] != self.trajectories['3d_xyz'].num_frames:
+                raise ValueError("First dimension of reprojection error must match the number of frames in the trajectory.")
+            if reprojection_error_data.shape[1] != len(self.trajectories['3d_xyz'].landmark_names):
+                raise ValueError("Second dimension of reprojection error must match the number of landmark names in the trajectory.")
+
+        self.reprojection_error = Error(name = 'reprojection_error',
+                                        data = reprojection_error_data,
+                                        marker_names = self.trajectories['3d_xyz'].landmark_names)
+    
     def add_metadata(self, metadata: Dict[str, Any]):
         self.metadata.update(metadata)
 
@@ -103,6 +116,10 @@ class Aspect:
             f"{len(self.trajectories)} trajectories: {list(self.trajectories.keys())}"
             if self.trajectories else "No trajectories"
         )
+        error_info = (
+            f"Has reprojection error"
+            if self.reprojection_error else "No reprojection error"
+        )
         metadata_info = (
             f": {self.metadata}"
             if self.metadata else "No metadata"
@@ -110,6 +127,7 @@ class Aspect:
         return (f"Aspect: {self.name}\n"
                 f"  Anatomical Structure:\n{anatomical_info}\n"
                 f"  Trajectories: {trajectory_info}\n"
+                f"  Error: {error_info}\n"
                 f"  Metadata: {metadata_info}\n\n")
     
     def __repr__(self):
