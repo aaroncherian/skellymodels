@@ -33,7 +33,7 @@ class AnatomicalStructureBuilder:
         self.tracked_point_names = tracked_point_names.copy()
         return self
 
-    def with_virtual_markers(self, virtual_marker_definitions: Dict[str, Dict[str, List[Union[float, str]]]]):
+    def with_virtual_markers(self, virtual_marker_definitions: Optional[Dict[str, Dict[str, List[Union[float, str]]]]]):
         
         if virtual_marker_definitions is not None:
             if not self.tracked_point_names:
@@ -44,7 +44,7 @@ class AnatomicalStructureBuilder:
         self.virtual_markers_definitions = virtual_marker_definitions
         return self
 
-    def with_segment_connections(self, segment_connections: Dict[str, Dict[str, str]]):
+    def with_segment_connections(self, segment_connections: Optional[Dict[str, Dict[str, str]]]):
 
         if segment_connections is not None:
             SegmentConnectionsValidator(segment_connections=segment_connections,
@@ -53,7 +53,7 @@ class AnatomicalStructureBuilder:
         self.segment_connections = segment_connections
         return self
 
-    def with_center_of_mass(self, center_of_mass_definitions: Dict[str, Dict[str, float]]):
+    def with_center_of_mass(self, center_of_mass_definitions: Optional[Dict[str, Dict[str, float]]]):
         
         if center_of_mass_definitions is not None:
             if not self.segment_connections:
@@ -64,7 +64,7 @@ class AnatomicalStructureBuilder:
         self.center_of_mass_definitions = center_of_mass_definitions
         return self
     
-    def with_joint_hierarchy(self,joint_hierarchy: Dict[str, List[str]]):
+    def with_joint_hierarchy(self,joint_hierarchy: Optional[Dict[str, List[str]]]):
         if joint_hierarchy is not None:
             JointHierarchyValidator(joint_hierarchy=joint_hierarchy,
                                     marker_names=self._marker_names)
@@ -82,7 +82,7 @@ class AnatomicalStructureBuilder:
                                    joint_hierarchy=self.joint_hierarchy)
 
 
-def create_anatomical_structure_from_model_info(model_info:ModelInfo) -> Dict[str, Optional[AnatomicalStructure]]:
+def create_anatomical_structure_from_model_info(model_info:ModelInfo) -> Dict[str, AnatomicalStructure]:
         structures = {}
         for aspect_name, aspect_structure in model_info.aspects.items():
 

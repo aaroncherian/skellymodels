@@ -15,11 +15,10 @@ class HumanAspectNames(Enum):
 class Human(Actor):
     def __init__(self, name: str, model_info:ModelInfo):
         super().__init__(name)
-        self.actor_type = "human"
         
         self.tracker = model_info.name
         self.aspect_order = model_info.aspect_order_and_slices
-        self.structures = create_anatomical_structure_from_model_info(model_info=model_info)
+        self.model_info = model_info
         
         self._initialize_aspects()
 
@@ -40,31 +39,39 @@ class Human(Actor):
             self._add_right_hand()
 
     def _add_body(self):
-        body = Aspect(
+        body = Aspect.from_model_info(
             name = HumanAspectNames.BODY.value,
-            anatomical_structure = self.structures[HumanAspectNames.BODY.value],
-            metadata = {"tracker_type": self.tracker})
+            aspect_name = HumanAspectNames.BODY.value,
+            model_info = self.model_info,
+            metadata = {"tracker_type": self.tracker}
+        )
         self.add_aspect(body)
     
     def _add_face(self):
-        face = Aspect(
+        face = Aspect.from_model_info(
             name = HumanAspectNames.FACE.value,
-            anatomical_structure = self.structures[HumanAspectNames.FACE.value],
-            metadata = {"tracker_type": self.tracker})
+            aspect_name = HumanAspectNames.FACE.value,
+            model_info = self.model_info,
+            metadata = {"tracker_type": self.tracker}
+        )
         self.add_aspect(face)
 
     def _add_left_hand(self):
-        left_hand = Aspect(
+        left_hand = Aspect.from_model_info(
             name = HumanAspectNames.LEFT_HAND.value,
-            anatomical_structure = self.structures[HumanAspectNames.LEFT_HAND.value],
-            metadata = {"tracker_type": self.tracker})
+            aspect_name = HumanAspectNames.LEFT_HAND.value,
+            model_info = self.model_info,
+            metadata = {"tracker_type": self.tracker}
+        )
         self.add_aspect(left_hand)
 
     def _add_right_hand(self):
-        right_hand = Aspect(
+        right_hand = Aspect.from_model_info(
             name = HumanAspectNames.RIGHT_HAND.value,
-            anatomical_structure = self.structures[HumanAspectNames.RIGHT_HAND.value],
-            metadata = {"tracker_type": self.tracker})
+            aspect_name = HumanAspectNames.RIGHT_HAND.value,
+            model_info = self.model_info,
+            metadata = {"tracker_type": self.tracker}
+        )
         self.add_aspect(right_hand)
 
     @property

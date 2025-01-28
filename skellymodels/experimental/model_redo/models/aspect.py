@@ -1,11 +1,17 @@
-from skellymodels.experimental.model_redo.fmc_anatomical_pipeline.calculate_center_of_mass import calculate_center_of_mass_from_trajectory
-from skellymodels.experimental.model_redo.fmc_anatomical_pipeline.enforce_rigid_bones import enforce_rigid_bones_from_trajectory
+from skellymodels.experimental.model_redo.builders.anatomical_structure_builder import create_anatomical_structure_from_model_info
+from skellymodels.experimental.model_redo.fmc_anatomical_pipeline.calculate_center_of_mass import \
+    calculate_center_of_mass_from_trajectory
+from skellymodels.experimental.model_redo.fmc_anatomical_pipeline.enforce_rigid_bones import \
+    enforce_rigid_bones_from_trajectory
 from skellymodels.experimental.model_redo.models.anatomical_structure import AnatomicalStructure
 from skellymodels.experimental.model_redo.models.error import Error
 from skellymodels.experimental.model_redo.models.trajectory import Trajectory
 
 from typing import Dict, Any, List, Optional
 import numpy as np
+
+from skellymodels.experimental.model_redo.tracker_info.model_info import ModelInfo
+
 
 class Aspect:
     """
@@ -21,90 +27,103 @@ class Aspect:
         metadata (Dict[str, Any]): Additional information about the aspect
     """
 
-    def __init__(self, name:str, anatomical_structure: Optional[AnatomicalStructure] = None, trajectories: Optional[Dict[str, Trajectory]] = None, metadata: Optional[Dict[str, Any]] = None):
+    def __init__(self, name: str, anatomical_structure: AnatomicalStructure,
+                 trajectories: Optional[Dict[str, Trajectory]] = None, metadata: Optional[Dict[str, Any]] = None):
         self.name = name
-        self.anatomical_structure: Optional[AnatomicalStructure] = anatomical_structure
-        self.trajectories: Dict[str, Trajectory] = {} if trajectories is None else trajectories  # TODO: the string keys make this clunky to use. If we "expect" to have 3d_xyz, total_body_com, and segment_com, could use an Enum
-        self.reprojection_error: Optional[Error] = None  # TODO: figure out how it makes sense to add this
-        self.metadata: Dict[str, Any] = {} if metadata is None else metadata  # TODO: Is it worth making a data class for this? Will we always want tracker type named or is it optional?
-
-    def add_anatomical_structure(self, anatomical_structure: AnatomicalStructure):
-        # TODO: should this be added after initialization? or will we ever intialize without an anatomical structure?
         self.anatomical_structure = anatomical_structure
+        self.trajectories: Dict[
+            str, Trajectory] = {} if trajectories is None else trajectories  # TODO: the string keys make this clunky to use. If we "expect" to have 3d_xyz, total_body_com, and segment_com, could use an Enum
+        self.reprojection_error: Optional[Error] = None
+        self.metadata: Dict[
+            str, Any] = {} if metadata is None else metadata  # TODO: Is it worth making a data class for this? Will we always want tracker type named or is it optional?
+    
+    @classmethod
+    def from_model_info(cls, name: str, aspect_name: str, model_info: ModelInfo, metadata: Optional[Dict[str, Any]] = None):
+        # TODO: need a function signature to explain this
+        anatomical_structure_dict = create_anatomical_structure_from_model_info(model_info=model_info)
+        return cls(name=name, anatomical_structure=anatomical_structure_dict[aspect_name], metadata=metadata)
 
-    def add_trajectory(self, name: str, 
-                         data: np.ndarray, 
-                         marker_names: List[str],  # it looks like this can't actually be None, it will fail the Trajectory Validator
-                         virtual_marker_definitions: Dict | None = None,
-                         segment_connections: Dict | None = None):
+    def add_trajectory(self, name: str,
+                       data: np.ndarray,
+                       marker_names: List[str],
+                       # it looks like this can't actually be None, it will fail the Trajectory Validator
+                       virtual_marker_definitions: Dict | None = None,
+                       segment_connections: Dict | None = None):
         """Add a trajectory to the aspect"""
         self.trajectories[name] = Trajectory(name=name,
-                                       data=data,
-                                       marker_names = marker_names,
-                                       virtual_marker_definitions=virtual_marker_definitions,
-                                       segment_connections=segment_connections)
+                                             data=data,
+                                             marker_names=marker_names,
+                                             virtual_marker_definitions=virtual_marker_definitions,
+                                             segment_connections=segment_connections)
 
     def add_tracked_points(self, tracked_points: np.ndarray):
         """Use tracked points to calculate trajectories, using virtual markers if included"""
         if self.anatomical_structure is None or self.anatomical_structure.tracked_point_names is None:
             raise ValueError("Anatomical structure and tracked point names are required to add tracked points.")
         self.trajectories['3d_xyz'] = Trajectory(name="3d_xyz",
-                                       data=tracked_points,
-                                       marker_names = self.anatomical_structure.tracked_point_names,
-                                       virtual_marker_definitions=self.anatomical_structure.virtual_markers_definitions,
-                                       segment_connections=self.anatomical_structure.segment_connections)
+                                                 data=tracked_points,
+                                                 marker_names=self.anatomical_structure.tracked_point_names,
+                                                 virtual_marker_definitions=self.anatomical_structure.virtual_markers_definitions,
+                                                 segment_connections=self.anatomical_structure.segment_connections)
 
     def add_total_body_center_of_mass(self, total_body_center_of_mass: np.ndarray):
-        self.trajectories['total_body_com'] = Trajectory(name = 'total_body_com',
-                                                         data = total_body_center_of_mass,
-                                                         marker_names = ['total_body_com']
+        self.trajectories['total_body_com'] = Trajectory(name='total_body_com',
+                                                         data=total_body_center_of_mass,
+                                                         marker_names=['total_body_com']
                                                          )
-        
-    def add_segment_center_of_mass(self, segment_center_of_mass:np.ndarray):
+
+    def add_segment_center_of_mass(self, segment_center_of_mass: np.ndarray):
         if self.anatomical_structure is None or self.anatomical_structure.center_of_mass_definitions is None:
-            raise ValueError("Anatomical structure and center of mass definitions are required to add segment center of mass.")
-        self.trajectories['segment_com'] = Trajectory(name = 'segment_com',
-                                                      data = segment_center_of_mass,
-                                                      marker_names = list(self.anatomical_structure.center_of_mass_definitions.keys()))
+            raise ValueError(
+                "Anatomical structure and center of mass definitions are required to add segment center of mass.")
+        self.trajectories['segment_com'] = Trajectory(name='segment_com',
+                                                      data=segment_center_of_mass,
+                                                      marker_names=list(
+                                                          self.anatomical_structure.center_of_mass_definitions.keys()))
 
     def add_reprojection_error(self, reprojection_error_data: np.ndarray):
         # TODO: This could be a feature of the trajectory as well, but I'm leaning towards aspect taking care of it
         if self.trajectories.get('3d_xyz') is not None:
             if reprojection_error_data.shape[0] != self.trajectories['3d_xyz'].num_frames:
-                raise ValueError("First dimension of reprojection error must match the number of frames in the trajectory.")
-            if reprojection_error_data.shape[1] != len(self.trajectories['3d_xyz'].landmark_names):
-                raise ValueError("Second dimension of reprojection error must match the number of landmark names in the trajectory.")
+                raise ValueError(
+                    "First dimension of reprojection error must match the number of frames in the trajectory.")
+            if reprojection_error_data.shape[1] != len(self.trajectories['3d_xyz'].tracked_point_names):
+                raise ValueError(
+                    "Second dimension of reprojection error must match the number of landmark names in the trajectory.")
 
-        self.reprojection_error = Error(name = 'reprojection_error',
-                                        data = reprojection_error_data,
-                                        marker_names = self.trajectories['3d_xyz'].landmark_names)
-    
+        self.reprojection_error = Error(name='reprojection_error',
+                                        data=reprojection_error_data,
+                                        marker_names=self.trajectories['3d_xyz'].tracked_point_names)
+
     def add_metadata(self, metadata: Dict[str, Any]):
         self.metadata.update(metadata)
 
-    def add_tracker_type(self, tracker_type:str):
+    def add_tracker_type(self, tracker_type: str):
         # TODO: Same with anatomical structure, are we ever adding this after initialization?
         self.add_metadata({"tracker_type": tracker_type})
 
     def calculate_center_of_mass(self):
         if self.anatomical_structure is not None and self.anatomical_structure.center_of_mass_definitions is not None:
             print('Calculating center of mass for aspect:', self.name)
-            total_body_com, segment_com = calculate_center_of_mass_from_trajectory(self.trajectories['3d_xyz'], self.anatomical_structure.center_of_mass_definitions)
+            total_body_com, segment_com = calculate_center_of_mass_from_trajectory(self.trajectories['3d_xyz'],
+                                                                                   self.anatomical_structure.center_of_mass_definitions)
 
             self.add_total_body_center_of_mass(total_body_center_of_mass=total_body_com)
             self.add_segment_center_of_mass(segment_center_of_mass=segment_com)
-    
+
         else:
-            print(f'Missing center of mass definitions for aspect {self.name}, skipping center of mass calculation')  # should be a warning when we switch to logging
+            print(
+                f'Missing center of mass definitions for aspect {self.name}, skipping center of mass calculation')  # should be a warning when we switch to logging
 
     def enforce_rigid_bones(self):
         if self.anatomical_structure is not None and self.anatomical_structure.joint_hierarchy is not None:
             print('Enforcing rigid bones for aspect:', self.name)
-            rigid_bones = enforce_rigid_bones_from_trajectory(self.trajectories['3d_xyz'], self.anatomical_structure.joint_hierarchy)
+            rigid_bones = enforce_rigid_bones_from_trajectory(self.trajectories['3d_xyz'],
+                                                              self.anatomical_structure.joint_hierarchy)
 
-            self.add_trajectory(name = 'rigid_3d_xyz',
-                                    data = rigid_bones,
-                                    marker_names = self.anatomical_structure.marker_names)
+            self.add_trajectory(name='rigid_3d_xyz',
+                                data=rigid_bones,
+                                marker_names=self.anatomical_structure.marker_names)
         else:
             print(f'Missing segment connections for aspect {self.name}, skipping rigid bone enforcement')
 
@@ -129,6 +148,6 @@ class Aspect:
                 f"  Trajectories: {trajectory_info}\n"
                 f"  Error: {error_info}\n"
                 f"  Metadata: {metadata_info}\n\n")
-    
+
     def __repr__(self):
         return self.__str__()
