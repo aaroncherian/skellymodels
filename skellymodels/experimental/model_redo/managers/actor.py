@@ -81,11 +81,13 @@ class Actor(ABC):
                 # Add metadata column for model
                 trajectory_df['model'] = f"{aspect.metadata['tracker_type']}_{aspect_name}"
 
-                # # Add error column
-                # if aspect.reprojection_error is None:
-                #     trajectory_df['reprojection_error'] = np.nan
-                # else:
-                #     trajectory_df['reprojection_error'] = aspect.reprojection_error.as_numpy
+                # Add error column
+                if aspect.reprojection_error is None:
+                    trajectory_df['reprojection_error'] = np.nan
+                else:
+                    trajectory_df['reprojection_error'] = trajectory_df.apply(
+                        lambda row: aspect.reprojection_error.get_frame(frame_number=row['frame']).get(row['keypoint'], np.nan), axis=1
+                    )
                 
                 # Append DataFrame to the list
                 all_data.append(trajectory_df)
