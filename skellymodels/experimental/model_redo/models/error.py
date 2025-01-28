@@ -6,15 +6,15 @@ from typing import List
 
 class ErrorValidator(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    data:np.ndarray
+    data: np.ndarray
     marker_names: List[str]
 
     @model_validator(mode="after")
     def validate_data(self):
         if self.data.shape[1] != len(self.marker_names):
-            raise ValueError(f"Error data must have the same number of markers as input name list. Data has {self.data.shape[1]} markers and list has {len(self.marker_names)} markers.")
+            raise ValueError(
+                f"Error data must have the same number of markers as input name list. Data has {self.data.shape[1]} markers and list has {len(self.marker_names)} markers.")
 
-    
 
 class Error:
     """
@@ -32,8 +32,8 @@ class Error:
 
     """
 
-    def __init__(self, name: str, 
-                 data: np.ndarray, 
+    def __init__(self, name: str,
+                 data: np.ndarray,
                  marker_names: List[str], ):
         self.name = name
         self._values = {}
@@ -44,9 +44,9 @@ class Error:
         self._original_data = data
 
     def _validate_data(self, data: np.ndarray, marker_names: List[str]):
-        ErrorValidator(data=data, marker_names= marker_names)
+        ErrorValidator(data=data, marker_names=marker_names)
 
-    def _set_error_data(self, data:np.ndarray, marker_names:List[str]):
+    def _set_error_data(self, data: np.ndarray, marker_names: List[str]):
         self._values.update({marker_name: data[:, i] for i, marker_name in enumerate(marker_names)})
         self._marker_names = marker_names.copy()
 
@@ -56,20 +56,21 @@ class Error:
 
     @property
     def landmark_data(self):
-        return {landmark_name:trajectory for landmark_name, trajectory in self._values.items() if landmark_name in self._landmark_names}
-    
+        return {landmark_name: trajectory for landmark_name, trajectory in self._values.items() if
+                landmark_name in self._landmark_names}
+
     @property
     def landmark_names(self):
         return self._landmark_names
-    
+
     @property
     def num_frames(self):
         return self._num_frames
-    
+
     @property
     def as_numpy(self):
         return self._original_data
-    
+
     @property
     def as_dataframe(self):
         tidy_data = []
@@ -77,15 +78,13 @@ class Error:
         for frame_number in range(self._num_frames):
             frame_data = self.get_frame(frame_number)
             for marker_name, marker_error in frame_data.items():
-
                 tidy_data.append({
                     "frame": frame_number,
                     "keypoint": marker_name,
                     "error": marker_error,
                 })
 
-        return pd.DataFrame(tidy_data)        
-
+        return pd.DataFrame(tidy_data)
 
     def get_marker(self, marker_name: str):
         return self._values[marker_name]
