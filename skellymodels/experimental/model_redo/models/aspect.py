@@ -38,15 +38,14 @@ class Aspect:
             str, Any] = {} if metadata is None else metadata  # TODO: Is it worth making a data class for this? Will we always want tracker type named or is it optional?
     
     @classmethod
-    def from_model_info(cls, name: str, aspect_name: str, model_info: ModelInfo, metadata: Optional[Dict[str, Any]] = None):
+    def from_model_info(cls, name: str, model_info: ModelInfo, metadata: Optional[Dict[str, Any]] = None):
         # TODO: need a function signature to explain this
         anatomical_structure_dict = create_anatomical_structure_from_model_info(model_info=model_info)
-        return cls(name=name, anatomical_structure=anatomical_structure_dict[aspect_name], metadata=metadata)
+        return cls(name=name, anatomical_structure=anatomical_structure_dict[name], metadata=metadata)
 
     def add_trajectory(self, name: str,
                        data: np.ndarray,
                        marker_names: List[str],
-                       # it looks like this can't actually be None, it will fail the Trajectory Validator
                        virtual_marker_definitions: Dict | None = None,
                        segment_connections: Dict | None = None):
         """Add a trajectory to the aspect"""
