@@ -21,7 +21,7 @@ human = Human(
             model_info=model_info
             )
 
-human.from_tracked_points_numpy(tracked_points_numpy_array=data)
+human.add_tracked_points_numpy(tracked_points_numpy_array=data)
 pprint([human.aspects])
 
 # Calculate center of mass 

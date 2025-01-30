@@ -30,7 +30,7 @@ class Trajectory:
         name (str): Identifier for this trajectory set
         _trajectories (Dict[str, np.ndarray]): Dictionary mapping marker names to their position data
             over time with shape (num_frames, 3)
-        _landmark_names (List[str]): Names of the all tracked points (need to firm up some of these naming conventions)
+        _tracked_point_names (List[str]): Names of the all tracked points (need to firm up some of these naming conventions)
          _marker_names (List[str]): Names of all markers (tracked + virtual) (repeated note about firming up naming conventions)
         _virtual_marker_definitions (Optional[Dict]): Definitions for calculating virtual markers
             from tracked markers using weighted combinations
@@ -42,15 +42,15 @@ class Trajectory:
     def __init__(self, name: str, 
                  data: np.ndarray, 
                  marker_names: List[str], 
-                 virtual_marker_definitions: Dict = None, 
-                 segment_connections: Dict = None):
+                 virtual_marker_definitions: Dict | None = None, 
+                 segment_connections: Dict | None = None):
         self.name = name
         self._trajectories = {}
-        self._landmark_names = marker_names
+        self._tracked_point_names = marker_names
         self._virtual_marker_definitions = virtual_marker_definitions
         self._segment_connections = segment_connections
-        self._validate_data(data=data, marker_names=self._landmark_names)
-        self._set_trajectory_data(data=data, marker_names=self._landmark_names, virtual_marker_definitions=virtual_marker_definitions)
+        self._validate_data(data=data, marker_names=self._tracked_point_names)
+        self._set_trajectory_data(data=data, marker_names=self._tracked_point_names, virtual_marker_definitions=virtual_marker_definitions)
         self._num_frames = data.shape[0]
 
     def _validate_data(self, data: np.ndarray, marker_names: List[str]):
@@ -73,12 +73,12 @@ class Trajectory:
             self._trajectories.update(virtual_marker_data)
 
     @property
-    def data(self):
+    def data(self):  # TODO: elsewhere this is used for the numpy array, but here its a dictionary 
         return self._trajectories
 
     @property
     def landmark_data(self):
-        return {landmark_name:trajectory for landmark_name, trajectory in self._trajectories.items() if landmark_name in self._landmark_names}
+        return {landmark_name:trajectory for landmark_name, trajectory in self._trajectories.items() if landmark_name in self._tracked_point_names}
 
     @property
     def virtual_marker_data(self):
@@ -99,6 +99,11 @@ class Trajectory:
             segment_positions.update({name: {'proximal': proximal, 'distal': distal}})
 
         return segment_positions
+    
+    @property
+    def tracked_point_names(self):
+        """The original tracked point names excluding virtual markers"""
+        return self._tracked_point_names
     
     @property
     def num_frames(self):
