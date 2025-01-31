@@ -2,7 +2,6 @@ import logging
 from typing import Dict, Tuple
 import numpy as np
 
-from skellymodels.experimental.model_redo.models import Trajectory
 
 # logger = logging.getLogger(__name__)
 
