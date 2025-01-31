@@ -9,6 +9,8 @@ from pprint import pprint
 
 from skellymodels.experimental.model_redo.tracker_info.model_info import MediapipeModelInfo
 
+
+
 model_info = MediapipeModelInfo()
 
 ## Choose a path to the directory 
@@ -24,29 +26,29 @@ human = Human(
 human.add_tracked_points_numpy(tracked_points_numpy_array=data)
 pprint([human.aspects])
 
-# Calculate center of mass 
-for aspect in human.aspects.values():
-    if aspect.anatomical_structure.center_of_mass_definitions:
-        print('Calculating center of mass for aspect:', aspect.name)
-        total_body_com, segment_com = calculate_center_of_mass_from_trajectory(aspect.trajectories['3d_xyz'], aspect.anatomical_structure.center_of_mass_definitions)
+# # Calculate center of mass 
+# for aspect in human.aspects.values():
+#     if aspect.anatomical_structure.center_of_mass_definitions:
+#         print('Calculating center of mass for aspect:', aspect.name)
+#         total_body_com, segment_com = calculate_center_of_mass_from_trajectory(aspect.trajectories['3d_xyz'], aspect.anatomical_structure.center_of_mass_definitions)
 
-        aspect.add_total_body_center_of_mass(total_body_center_of_mass=total_body_com)
-        aspect.add_segment_center_of_mass(segment_center_of_mass=segment_com)
+#         aspect.add_total_body_center_of_mass(total_body_center_of_mass=total_body_com)
+#         aspect.add_segment_center_of_mass(segment_center_of_mass=segment_com)
     
-    else:
-        print('Skipping center of mass calculation for aspect:', aspect.name)
-pprint([human.aspects.values()])
+#     else:
+#         print('Skipping center of mass calculation for aspect:', aspect.name)
+# pprint([human.aspects.values()])
 
-for aspect in human.aspects.values():
-    if aspect.anatomical_structure.joint_hierarchy:
-        print('Enforcing rigid bones for aspect:', aspect.name)
-        rigid_bones = enforce_rigid_bones_from_trajectory(aspect.trajectories['3d_xyz'], aspect.anatomical_structure.joint_hierarchy)
+# for aspect in human.aspects.values():
+#     if aspect.anatomical_structure.joint_hierarchy:
+#         print('Enforcing rigid bones for aspect:', aspect.name)
+#         rigid_bones = enforce_rigid_bones_from_trajectory(aspect.trajectories['3d_xyz'], aspect.anatomical_structure.joint_hierarchy)
 
-        aspect.add_trajectory(name = 'rigid_3d_xyz',
-                                data = rigid_bones,
-                                marker_names = aspect.anatomical_structure.marker_names)
-    else:
-        print('Skipping rigid bones enforcement for aspect:', aspect.name)
-pprint([human.aspects.values()])
-f = 2
+#         aspect.add_trajectory(name = 'rigid_3d_xyz',
+#                                 data = rigid_bones,
+#                                 marker_names = aspect.anatomical_structure.marker_names)
+#     else:
+#         print('Skipping rigid bones enforcement for aspect:', aspect.name)
+# pprint([human.aspects.values()])
+# f = 2
 

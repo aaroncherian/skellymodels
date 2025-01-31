@@ -108,15 +108,6 @@ class Aspect:
         # TODO: Same with anatomical structure, are we ever adding this after initialization?
         self.add_metadata({"tracker_type": tracker_type})
 
-    # def calculate_center_of_mass(self):
-    #     """Delegate CoM calculation to aspect_helpers to keep Aspect clean."""
-    #     from skellymodels.experimental.model_redo.biomechanics.biomechanics_wrappers import calculate_center_of_mass_from_aspect
-    #     calculate_center_of_mass_from_aspect(self)
-
-
-    # # def enforce_rigid_bones(self):
-    # #     enforce_rigid_bones_from_trajectory
-
     def __str__(self):
         anatomical_info = (
             str(self.anatomical_structure) if self.anatomical_structure else "No anatomical structure"
