@@ -12,7 +12,7 @@ from skellymodels.experimental.model_redo.tracker_info.model_info import Mediapi
 model_info = MediapipeModelInfo()
 
 ## Choose a path to the directory 
-path_to_data = Path(r"C:\Users\aaron\FreeMocap_Data\recording_sessions\freemocap_sample_data\output_data\raw_data\mediapipe_3dData_numFrames_numTrackedPoints_spatialXYZ.npy")
+path_to_data = Path(r"C:\Users\aaron\FreeMocap_Data\recording_sessions\freemocap_test_data\output_data\raw_data\mediapipe_3dData_numFrames_numTrackedPoints_spatialXYZ.npy")
 data = np.load(path_to_data)
 
 ## Create an Actor
@@ -49,3 +49,4 @@ for aspect in human.aspects.values():
         print('Skipping rigid bones enforcement for aspect:', aspect.name)
 pprint([human.aspects.values()])
 f = 2
+

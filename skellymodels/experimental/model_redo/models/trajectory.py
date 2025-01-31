@@ -87,7 +87,7 @@ class Trajectory:
         return {marker_name:trajectory for marker_name, trajectory in self._trajectories.items() if marker_name in self._virtual_marker_definitions.keys()}
 
     @property
-    def segment_data(self):
+    def segment_data(self) -> Dict[str, Dict[str, np.ndarray]]:
         if not self._segment_connections:
             return {}
         
