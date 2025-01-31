@@ -2,7 +2,6 @@ import logging
 from typing import Dict, Tuple
 import numpy as np
 
-from skellymodels.experimental.model_redo.models import Trajectory
 
 # logger = logging.getLogger(__name__)
 
@@ -90,30 +89,24 @@ def create_array_of_segment_com_data(segment_com_data: Dict[str, np.ndarray]) ->
 
     return np.stack(com_data_list, axis=1)
 
-
-def calculate_center_of_mass_from_trajectory(trajectory: Trajectory, center_of_mass_definitions: Dict[str, Dict[str, float]]) -> Tuple[np.ndarray, np.ndarray]:
+def calculate_center_of_mass(segment_positions: Dict[str, Dict[str, np.ndarray]], 
+                             center_of_mass_definitions: Dict[str, Dict[str, float]], 
+                             num_frames:int) -> Tuple[np.ndarray, np.ndarray]:
     """
     Calculates the segment and total body center of mass for a skeleton based on anthropometric data.
-
-    Parameters:
-    - skeleton: The Skeleton instance containing marker data and segment information.
-    - anthropometric_data: A dictionary containing segment mass percentages
 
     Returns:
     - A tuple containing the segment center of mass data and the total body center of mass.
     """
-    segment_3d_positions = trajectory.segment_data
 
-    segment_com_data = calculate_all_segments_com(segment_3d_positions, center_of_mass_definitions)
+    segment_com_data = calculate_all_segments_com(segment_positions, center_of_mass_definitions)
 
     total_body_com = calculate_total_body_center_of_mass(
         segment_center_of_mass_data=segment_com_data,
         center_of_mass_definitions=center_of_mass_definitions,
-        num_frames= trajectory.num_frames
+        num_frames=num_frames
     )
 
     segment_com_data_as_array = create_array_of_segment_com_data(segment_com_data)
-
-
 
     return total_body_com, segment_com_data_as_array

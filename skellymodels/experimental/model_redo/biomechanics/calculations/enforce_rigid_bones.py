@@ -1,8 +1,6 @@
 from copy import deepcopy
 import numpy as np
 from typing import Dict, List, Union
-from skellymodels.experimental.model_redo.models import Trajectory
-
 
 
 def calculate_bone_lengths_and_statistics(
@@ -44,7 +42,7 @@ def calculate_bone_lengths_and_statistics(
     return bone_statistics
 
 
-def enforce_rigid_bones(
+def rigidify_bones(
     marker_data: Dict[str, np.ndarray],
     segment_connections: Dict[str, Dict[str, np.ndarray]],
     bone_lengths_and_statistics: Dict[str, Dict[str, Union[np.ndarray, float]]],
@@ -115,60 +113,27 @@ def merge_rigid_marker_data(rigid_marker_data: Dict[str, np.ndarray]) -> np.ndar
     Returns:
     - A numpy array containing the merged center of mass data.
     """
-    # TODO: We could use this more broadly as a skeleton method
 
     rigid_marker_data_list = list(rigid_marker_data.values())
 
     return np.stack(rigid_marker_data_list, axis=1)
 
-
-# def enforce_rigid_bones_from_skeleton(skeleton: Skeleton) -> np.ndarray:
-#     """
-#     Calculates bone lengths and statistics from skeleton data and enforces rigid bones.
-
-#     Parameters:
-#     - skeleton: The Skeleton instance containing segment information, joint hierarchy, and marker data.
-
-#     Returns:
-#     - A numpy array of adjusted marker positions.
-#     """
-#     # TODO: Should this be a method of Skeleton?
-#     if not skeleton.segments:
-#         raise ValueError("Segments must be defined before rigid bones can be enforced.")
-
-#     if not skeleton.joint_hierarchy:
-#         raise ValueError("Joint hierarchy must be defined before rigid bones can be enforced.")
-
-#     bone_lengths_and_statistcs = calculate_bone_lengths_and_statistics(
-#         marker_data=skeleton.marker_data, segment_connections=skeleton.segments
-#     )
-
-#     rigid_marker_data = enforce_rigid_bones(
-#         marker_data=skeleton.marker_data,
-#         segment_connections=skeleton.segments,
-#         bone_lengths_and_statistics=bone_lengths_and_statistcs,
-#         joint_hierarchy=skeleton.joint_hierarchy,
-#     )
-
-#     return merge_rigid_marker_data(rigid_marker_data=rigid_marker_data)
-
-
-def enforce_rigid_bones_from_trajectory(trajectory:Trajectory, joint_hierarchy: Dict[str, List[str]]):
-
+def enforce_rigid_bones(marker_trajectories:np.ndarray,
+                        segment_3d_positions:Dict[str, Dict[str, np.ndarray]],
+                        segment_conections: Dict[str, Dict[str, str]],
+                        joint_hierarchy: Dict[str, List[str]]
+                        ):
+    
     bone_lengths_and_statistics = calculate_bone_lengths_and_statistics(
-        marker_data=trajectory.data, 
-        segment_data=trajectory.segment_data
+        marker_data = marker_trajectories,
+        segment_data = segment_3d_positions
     )
 
-    rigid_marker_data = enforce_rigid_bones(
-        marker_data=trajectory.data,
-        segment_connections=trajectory._segment_connections,
-        bone_lengths_and_statistics=bone_lengths_and_statistics,
-        joint_hierarchy=joint_hierarchy,
+    rigid_marker_data = rigidify_bones(
+        marker_data=marker_trajectories,
+        segment_connections=segment_conections,
+        bone_lengths_and_statistics= bone_lengths_and_statistics,
+        joint_hierarchy=joint_hierarchy
     )
 
-    return merge_rigid_marker_data(rigid_marker_data=rigid_marker_data)
-
-
-
-
+    return merge_rigid_marker_data(rigid_marker_data)
