@@ -32,13 +32,15 @@ class CenterOfMassCalculation(AnatomicalCalculation):
             },
             messages=[f'Successfully calculated COM for aspect: {aspect.name}'] 
         )
-        
-    def store_results(aspect: Aspect, results: CalculationResult):
+    
+    @staticmethod
+    def store(aspect: Aspect, results: CalculationResult):
         if not results.success:
             return
         
         aspect.add_segment_center_of_mass(results.data['segment_com'])
         aspect.add_total_body_center_of_mass(results.data['total_body_com'])
+        f = 2
 
 
 class RigidBonesEnforcement(AnatomicalCalculation):
