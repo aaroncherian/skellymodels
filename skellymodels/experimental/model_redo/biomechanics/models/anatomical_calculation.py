@@ -10,16 +10,24 @@ class CalculationResult:
     messages: List[str]
 
 class AnatomicalCalculation(ABC):
-    @staticmethod
     @abstractmethod
-    def calculate(aspect:Aspect) -> CalculationResult:
+    def calculate(self, aspect:Aspect) -> CalculationResult:
         """Perform the calculation and return results"""
         pass
 
-    @staticmethod
     @abstractmethod
-    def store(aspect:Aspect, results: CalculationResult):
+    def store(self, aspect:Aspect, results: CalculationResult):
         """Store the calculation results in the aspect"""
         pass
 
+    def calculate_and_store(self, aspect:Aspect):
+        "Perform calculation and store results in aspect"
+        results = self.calculate(aspect)
+
+        if results.success:
+            self.store(
+                aspect = aspect,
+                results=results)
+
+        return results
     

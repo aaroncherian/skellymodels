@@ -11,18 +11,18 @@ task_dictionary: dict[str, AnatomicalCalculation] = {
 
 class BiomechanicsProcessor:
     @staticmethod
-    def process_human(human:Human):
+    def process_human(human: Human):
         for aspect in human.aspects.values():
             results_log = []
-            for task_name, task_function in task_dictionary.items():
-                results = task_function.calculate(aspect=aspect)
+            for task_name, TaskClass in task_dictionary.items():
+                task_instance = TaskClass()  # Instantiate the class
+                
+                # Use the new method
+                results = task_instance.calculate_and_store(aspect=aspect)
+                
+                if results:
+                    results_log.extend(results.messages)
 
-                results_log.extend(results.messages)
-
-                if results.success:
-                    task_function.store(aspect=aspect,
-                                        results = results)
-            
             print(f"\nResults for aspect {aspect.name}:")
             for msg in results_log:
                 print(f"  {msg}")

@@ -7,8 +7,7 @@ from skellymodels.experimental.model_redo.biomechanics.models.anatomical_calcula
 
 
 class CenterOfMassCalculation(AnatomicalCalculation):
-    @staticmethod
-    def calculate(aspect:Aspect) -> CalculationResult:
+    def calculate(self, aspect:Aspect) -> CalculationResult:
         if not aspect.anatomical_structure.center_of_mass_definitions:
             return CalculationResult(
                 success = False,
@@ -33,8 +32,7 @@ class CenterOfMassCalculation(AnatomicalCalculation):
             messages=[f'Successfully calculated COM for aspect: {aspect.name}'] 
         )
     
-    @staticmethod
-    def store(aspect: Aspect, results: CalculationResult):
+    def store(self, aspect: Aspect, results: CalculationResult):
         if not results.success:
             return
         
@@ -43,9 +41,13 @@ class CenterOfMassCalculation(AnatomicalCalculation):
         f = 2
 
 
+        
+    ## add calculation and store method to do both of these in the AnatomicalCalculation base class
+
+
+
 class RigidBonesEnforcement(AnatomicalCalculation):
-    @staticmethod
-    def calculate(aspect:Aspect) -> CalculationResult:
+    def calculate(self, aspect:Aspect) -> CalculationResult:
         if not aspect.anatomical_structure.joint_hierarchy:
             return CalculationResult(
                 success = False,
@@ -71,8 +73,7 @@ class RigidBonesEnforcement(AnatomicalCalculation):
             messages= [f'Successfully enforced rigid bones for aspect: {aspect.name}']
         )
 
-    @staticmethod
-    def store(aspect:Aspect, results: CalculationResult):
+    def store(self, aspect:Aspect, results: CalculationResult):
         if not results.success:
             return
         
