@@ -24,6 +24,7 @@ human = Human(
 human.add_tracked_points_numpy(tracked_points_numpy_array=data)
 pprint([human.aspects])
 
-BiomechanicsProcessor.process_human(human)
-pprint([human.aspects])
+human.calculate()
+f = 2
+# pprint([human.aspects])
 

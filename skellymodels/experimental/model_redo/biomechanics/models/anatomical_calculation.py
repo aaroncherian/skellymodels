@@ -19,7 +19,7 @@ class AnatomicalCalculation(ABC):
     def store(self, aspect:Aspect, results: CalculationResult):
         """Store the calculation results in the aspect"""
         pass
-
+    
     def calculate_and_store(self, aspect:Aspect):
         "Perform calculation and store results in aspect"
         results = self.calculate(aspect)

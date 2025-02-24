@@ -83,3 +83,24 @@ class RigidBonesEnforcement(AnatomicalCalculation):
             marker_names=aspect.anatomical_structure.marker_names
         )
 
+
+
+class CalculationPipeline:
+    def __init__(self, tasks: list[AnatomicalCalculation]):
+        self.tasks = tasks
+
+    def run(self, aspect:Aspect):
+        """Instantiate tasks and run calculate_and_store on the given aspect."""
+        results_log = []
+        for task_cls in self.tasks:
+            task_instance = task_cls()  
+            results = task_instance.calculate_and_store(aspect)
+
+            if results:
+                results_log.extend(results.messages)
+
+        return results_log
+
+
+
+STANDARD_PIPELINE = CalculationPipeline([CenterOfMassCalculation, RigidBonesEnforcement])
