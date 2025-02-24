@@ -6,7 +6,6 @@ from skellymodels.experimental.model_redo.managers.human import Human
 from pprint import pprint
 
 from skellymodels.experimental.model_redo.tracker_info.model_info import MediapipeModelInfo
-from skellymodels.experimental.model_redo.biomechanics.biomechanics_processor import BiomechanicsProcessor
 
 
 model_info = MediapipeModelInfo()
@@ -24,7 +23,7 @@ human = Human(
 human.add_tracked_points_numpy(tracked_points_numpy_array=data)
 pprint([human.aspects])
 
-human.calculate()
+human.calculate() #does our COM/Rigid bones calculations
 f = 2
 # pprint([human.aspects])
 
