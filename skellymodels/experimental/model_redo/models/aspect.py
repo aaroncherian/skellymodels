@@ -1,16 +1,17 @@
 from skellymodels.experimental.model_redo.builders.anatomical_structure_builder import create_anatomical_structure_from_model_info
-from skellymodels.experimental.model_redo.fmc_anatomical_pipeline.calculate_center_of_mass import \
-    calculate_center_of_mass_from_trajectory
-from skellymodels.experimental.model_redo.fmc_anatomical_pipeline.enforce_rigid_bones import \
-    enforce_rigid_bones_from_trajectory
+from skellymodels.experimental.model_redo.tracker_info.model_info import ModelInfo
+
 from skellymodels.experimental.model_redo.models.anatomical_structure import AnatomicalStructure
 from skellymodels.experimental.model_redo.models.error import Error
 from skellymodels.experimental.model_redo.models.trajectory import Trajectory
 
+# from skellymodels.experimental.model_redo.biomechanics.biomechanics_wrappers import (
+#     calculate_center_of_mass,
+#     enforce_rigid_bones_from_trajectory,
+# )
+
 from typing import Dict, Any, List, Optional
 import numpy as np
-
-from skellymodels.experimental.model_redo.tracker_info.model_info import ModelInfo
 
 
 class Aspect:
@@ -39,7 +40,13 @@ class Aspect:
     
     @classmethod
     def from_model_info(cls, name: str, model_info: ModelInfo, metadata: Optional[Dict[str, Any]] = None):
-        # TODO: need a function signature to explain this
+        """ Class method to create an Aspect from a ModelInfo instance
+        
+        Args:
+            name (str): Identifier for the aspect (e.g., "body", "face", "left_hand")
+            model_info (ModelInfo): ModelInfo class instance
+            metadata (Optional[Dict[str, Any]]): Additional information about the aspect (include the 'tracker)
+        """
         anatomical_structure_dict = create_anatomical_structure_from_model_info(model_info=model_info)
         return cls(name=name, anatomical_structure=anatomical_structure_dict[name], metadata=metadata)
 
@@ -100,31 +107,6 @@ class Aspect:
     def add_tracker_type(self, tracker_type: str):
         # TODO: Same with anatomical structure, are we ever adding this after initialization?
         self.add_metadata({"tracker_type": tracker_type})
-
-    def calculate_center_of_mass(self):
-        if self.anatomical_structure is not None and self.anatomical_structure.center_of_mass_definitions is not None:
-            print('Calculating center of mass for aspect:', self.name)
-            total_body_com, segment_com = calculate_center_of_mass_from_trajectory(self.trajectories['3d_xyz'],
-                                                                                   self.anatomical_structure.center_of_mass_definitions)
-
-            self.add_total_body_center_of_mass(total_body_center_of_mass=total_body_com)
-            self.add_segment_center_of_mass(segment_center_of_mass=segment_com)
-
-        else:
-            print(
-                f'Missing center of mass definitions for aspect {self.name}, skipping center of mass calculation')  # should be a warning when we switch to logging
-
-    def enforce_rigid_bones(self):
-        if self.anatomical_structure is not None and self.anatomical_structure.joint_hierarchy is not None:
-            print('Enforcing rigid bones for aspect:', self.name)
-            rigid_bones = enforce_rigid_bones_from_trajectory(self.trajectories['3d_xyz'],
-                                                              self.anatomical_structure.joint_hierarchy)
-
-            self.add_trajectory(name='rigid_3d_xyz',
-                                data=rigid_bones,
-                                marker_names=self.anatomical_structure.marker_names)
-        else:
-            print(f'Missing segment connections for aspect {self.name}, skipping rigid bone enforcement')
 
     def __str__(self):
         anatomical_info = (
