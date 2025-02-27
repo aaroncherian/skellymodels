@@ -41,9 +41,7 @@ class CenterOfMassCalculation(AnatomicalCalculation):
         f = 2
 
 
-        
-    ## add calculation and store method to do both of these in the AnatomicalCalculation base class
-
+    
 
 
 class RigidBonesEnforcement(AnatomicalCalculation):
