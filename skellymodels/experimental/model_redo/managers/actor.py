@@ -63,20 +63,7 @@ class Actor(ABC):
     
     # TODO: save out to parquet with metadata
 
-    def save_out_numpy_data(self):
-        for aspect in self.aspects.values():
-            for trajectory in aspect.trajectories.values():
-                print('Saving out numpy:', aspect.metadata['tracker_type'], aspect.name, trajectory.name)
-                np.save(f"{aspect.metadata['tracker_type']}_{aspect.name}_{trajectory.name}.npy",
-                        trajectory.data)  # TODO: the .data is throwing a type error because this is sometimes a dict instead of an array
-
-    def save_out_csv_data(self):
-        for aspect in self.aspects.values():
-            for trajectory in aspect.trajectories.values():
-                print('Saving out CSV:', aspect.metadata['tracker_type'], aspect.name, trajectory.name)
-                trajectory.as_dataframe.to_csv(f"{aspect.metadata['tracker_type']}_{aspect.name}_{trajectory.name}.csv")
-
-    def save_out_all_data_csv(self):
+    def all_data_as_dataframe(self) -> pd.DataFrame:
         all_data = []
 
         # Loop through aspects
@@ -106,6 +93,36 @@ class Actor(ABC):
         # Sort by frame and then by model
         big_df = big_df.sort_values(by=['frame', 'model']).reset_index(drop=True)
 
-        # Save the result to CSV
-        big_df.to_csv('freemocap_data_by_frame.csv', index=False)
+        return big_df
+
+    def save_out_numpy_data(self):
+        for aspect in self.aspects.values():
+            for trajectory in aspect.trajectories.values():
+                print('Saving out numpy:', aspect.metadata['tracker_type'], aspect.name, trajectory.name)
+                np.save(f"{aspect.metadata['tracker_type']}_{aspect.name}_{trajectory.name}.npy",
+                        trajectory.data)  # TODO: the .data is throwing a type error because this is sometimes a dict instead of an array
+
+    def save_out_csv_data(self):
+        for aspect in self.aspects.values():
+            for trajectory in aspect.trajectories.values():
+                print('Saving out CSV:', aspect.metadata['tracker_type'], aspect.name, trajectory.name)
+                trajectory.as_dataframe.to_csv(f"{aspect.metadata['tracker_type']}_{aspect.name}_{trajectory.name}.csv")
+
+    def save_out_all_data_csv(self):
+        self.all_data_as_dataframe().to_csv('freemocap_data_by_frame.csv', index=False)
         print("Data successfully saved to 'freemocap_data_by_frame.csv'")
+
+    def save_out_all_data_parquet(self):
+        dataframe = self.all_data_as_dataframe()
+
+        dataframe.attrs['metadata'] = {
+            'created_at': '2025-03-04',
+            'source_system': 'data_pipeline_v1'
+        }
+        self.all_data_as_dataframe().to_parquet('freemocap_data_by_frame.parquet')
+        print("Data successfully saved to 'freemocap_data_by_frame.parquet'")
+
+        loaded_df = pd.read_parquet('freemocap_data_by_frame.parquet')
+        print("Loaded DataFrame:")
+        print(loaded_df)
+        print("Metadata:", loaded_df.attrs['metadata'])

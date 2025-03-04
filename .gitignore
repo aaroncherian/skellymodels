@@ -173,3 +173,4 @@ mediapipe_left_hand_3d_xyz.csv
 mediapipe_left_hand_3d_xyz.npy
 mediapipe_right_hand_3d_xyz.csv
 mediapipe_right_hand_3d_xyz.npy
+*.parquet
