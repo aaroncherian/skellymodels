@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
+import datetime
 from skellymodels.experimental.model_redo.models.aspect import Aspect
 from typing import Dict, Optional
 
@@ -116,13 +117,8 @@ class Actor(ABC):
         dataframe = self.all_data_as_dataframe()
 
         dataframe.attrs['metadata'] = {
-            'created_at': '2025-03-04',
-            'source_system': 'data_pipeline_v1'
+            'created_at': datetime.datetime.now().isoformat(),
+            'created_with': 'skelly_models'
         }
-        self.all_data_as_dataframe().to_parquet('freemocap_data_by_frame.parquet')
+        dataframe.to_parquet('freemocap_data_by_frame.parquet')
         print("Data successfully saved to 'freemocap_data_by_frame.parquet'")
-
-        loaded_df = pd.read_parquet('freemocap_data_by_frame.parquet')
-        print("Loaded DataFrame:")
-        print(loaded_df)
-        print("Metadata:", loaded_df.attrs['metadata'])
