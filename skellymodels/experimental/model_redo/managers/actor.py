@@ -71,37 +71,43 @@ class Actor(ABC):
             for msg in results_logs:
                 print(f"  {msg}")
 
+
+
     def all_data_as_dataframe(self) -> pd.DataFrame:
         all_data = []
 
         # Loop through aspects
         for aspect_name, aspect in self.aspects.items():
-            if '3d_xyz' in aspect.trajectories:
-                # Get tidy DataFrame for the trajectory
-                trajectory_df = aspect.trajectories['3d_xyz'].as_dataframe
+            for trajectory_name, trajectory in aspect.trajectories.items():
 
-                # Add metadata column for model
-                trajectory_df['model'] = f"{aspect.metadata['tracker_type']}_{aspect_name}"
+                if not trajectory_name == 'rigid_3d_xyz': #NOTE: 03/04/25 - excluding rigid body trajectories for the moment because I think they'll be handled different enough in the final version that its not worth including at the moment
+                     # Convert trajectory to a DataFrame
+                    trajectory_df = trajectory.as_dataframe.copy()
+                    
+                    # Add metadata columns
+                    trajectory_df['model'] = f"{aspect.metadata['tracker_type']}.{aspect_name}"
+                    trajectory_df['type'] = trajectory_name  # Store the trajectory type
 
-                # Add error column
-                if aspect.reprojection_error is None:
-                    trajectory_df['reprojection_error'] = np.nan
-                else:
-                    trajectory_df['reprojection_error'] = trajectory_df.apply(
-                        lambda row: aspect.reprojection_error.get_frame(frame_number=row['frame']).get(row['keypoint'],
-                                                                                                       np.nan), axis=1
-                    )  # TODO: this can maybe be a merge (or concat)
+                    # Add error column
+                    if aspect.reprojection_error is None:
+                        trajectory_df['reprojection_error'] = np.nan
+                    else:
+                        trajectory_df['reprojection_error'] = trajectory_df.apply(
+                            lambda row: aspect.reprojection_error.get_frame(frame_number=row['frame']).get(row['keypoint'], np.nan),
+                            axis=1
+                        )  
 
-                # Append DataFrame to the list
-                all_data.append(trajectory_df)
+                    # Append DataFrame to the list
+                    all_data.append(trajectory_df)
 
         # Combine all DataFrames into one
         big_df = pd.concat(all_data, ignore_index=True)
 
-        # Sort by frame and then by model
-        big_df = big_df.sort_values(by=['frame', 'model']).reset_index(drop=True)
+        # Sort by frame, model, and type
+        big_df = big_df.sort_values(by=['frame', 'model', 'type']).reset_index(drop=True)
 
         return big_df
+
 
     def save_out_numpy_data(self):
         for aspect in self.aspects.values():
