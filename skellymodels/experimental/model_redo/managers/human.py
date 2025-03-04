@@ -41,7 +41,6 @@ class Human(Actor):
     def _add_body(self):
         body = Aspect.from_model_info(
             name = HumanAspectNames.BODY.value,
-            aspect_name = HumanAspectNames.BODY.value,
             model_info = self.model_info,
             metadata = {"tracker_type": self.tracker}
         )
@@ -50,7 +49,6 @@ class Human(Actor):
     def _add_face(self):
         face = Aspect.from_model_info(
             name = HumanAspectNames.FACE.value,
-            aspect_name = HumanAspectNames.FACE.value,
             model_info = self.model_info,
             metadata = {"tracker_type": self.tracker}
         )
@@ -59,7 +57,6 @@ class Human(Actor):
     def _add_left_hand(self):
         left_hand = Aspect.from_model_info(
             name = HumanAspectNames.LEFT_HAND.value,
-            aspect_name = HumanAspectNames.LEFT_HAND.value,
             model_info = self.model_info,
             metadata = {"tracker_type": self.tracker}
         )
@@ -68,7 +65,6 @@ class Human(Actor):
     def _add_right_hand(self):
         right_hand = Aspect.from_model_info(
             name = HumanAspectNames.RIGHT_HAND.value,
-            aspect_name = HumanAspectNames.RIGHT_HAND.value,
             model_info = self.model_info,
             metadata = {"tracker_type": self.tracker}
         )

@@ -7,6 +7,7 @@ from skellymodels.experimental.model_redo.models.aspect import Aspect
 from typing import Dict, Optional
 
 from skellymodels.experimental.model_redo.tracker_info.model_info import ModelInfo
+from skellymodels.experimental.model_redo.biomechanics.anatomical_calculations import CalculationPipeline, STANDARD_PIPELINE
 
 
 class Actor(ABC):
@@ -62,7 +63,13 @@ class Actor(ABC):
         actor.add_tracked_points_numpy(tracked_points_numpy_array=tracked_points_numpy_array)
         return actor
     
-    # TODO: save out to parquet with metadata
+    def calculate(self, pipeline:CalculationPipeline = STANDARD_PIPELINE):
+        for aspect in self.aspects.values():
+            results_logs = pipeline.run(aspect=aspect)
+
+            print(f"\nResults for aspect {aspect.name}:")
+            for msg in results_logs:
+                print(f"  {msg}")
 
     def all_data_as_dataframe(self) -> pd.DataFrame:
         all_data = []
