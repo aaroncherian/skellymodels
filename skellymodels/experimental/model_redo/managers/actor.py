@@ -82,7 +82,7 @@ class Actor(ABC):
 
                 if not trajectory_name == 'rigid_3d_xyz': #NOTE: 03/04/25 - excluding rigid body trajectories for the moment because I think they'll be handled different enough in the final version that its not worth including at the moment
                      # Convert trajectory to a DataFrame
-                    trajectory_df = trajectory.as_dataframe.copy()
+                    trajectory_df = trajectory.as_dataframe
                     
                     # Add metadata columns
                     trajectory_df['model'] = f"{aspect.metadata['tracker_type']}.{aspect_name}"
