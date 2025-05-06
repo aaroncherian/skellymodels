@@ -9,7 +9,7 @@ from typing import Dict, Optional
 from skellymodels.experimental.model_redo.tracker_info.model_info import ModelInfo
 from skellymodels.experimental.model_redo.biomechanics.anatomical_calculations import CalculationPipeline, STANDARD_PIPELINE
 
-
+from pathlib import Path
 class Actor(ABC):
     """
     The Actor class is a container for multiple Aspects of a single person/creature/object that we track in 3D.
@@ -54,8 +54,17 @@ class Actor(ABC):
         """
         pass
 
+    @abstractmethod
+    def add_landmarks_numpy_array(self, landmarks_numpy_array:np.ndarray):
+        """
+        Takes in the landmarks data (meaning virtual markers already calculated), splits and categorizes it based on the ranges determined by the ModelInfo,
+        and adds it as a tracked point Trajectory to the body, and optionally face/hands aspects 
+        """
+        pass
+
+
     @classmethod
-    def from_numpy_array(cls, name: str, model_info: ModelInfo, tracked_points_numpy_array: np.ndarray):
+    def from_tracked_points_numpy_array(cls, name: str, model_info: ModelInfo, tracked_points_numpy_array: np.ndarray):
         """
         Takes in a numpy array of tracked points and returns an Actor object with the tracked points added in aspects
         """
@@ -63,6 +72,11 @@ class Actor(ABC):
         actor.add_tracked_points_numpy(tracked_points_numpy_array=tracked_points_numpy_array)
         return actor
     
+    @classmethod
+    def from_landmarks_numpy_array(cls, name:str, model_info:ModelInfo, landmarks_numpy_array:np.ndarray):
+        actor = cls(name=name, model_info = model_info)
+        actor.add_landmarks_numpy_array(landmarks_numpy_array=landmarks_numpy_array)
+
     def calculate(self, pipeline:CalculationPipeline = STANDARD_PIPELINE):
         for aspect in self.aspects.values():
             results_logs = pipeline.run(aspect=aspect)
@@ -109,29 +123,43 @@ class Actor(ABC):
         return big_df
 
 
-    def save_out_numpy_data(self):
+    def save_out_numpy_data(self, path_to_output_folder: Optional[Path] = None):
+        if path_to_output_folder is None:
+            path_to_output_folder = Path.cwd()
+
         for aspect in self.aspects.values():
             for trajectory in aspect.trajectories.values():
-                print('Saving out numpy:', aspect.metadata['tracker_type'], aspect.name, trajectory.name)
-                np.save(f"{aspect.metadata['tracker_type']}_{aspect.name}_{trajectory.name}.npy",
+                save_path = path_to_output_folder / f"{aspect.metadata['tracker_type']}_{aspect.name}_{trajectory.name}.npy"
+                np.save(save_path,
                         trajectory.data)  # TODO: the .data is throwing a type error because this is sometimes a dict instead of an array
+                print(f"Saved out {save_path}")
 
-    def save_out_csv_data(self):
+    def save_out_csv_data(self, path_to_output_folder: Optional[Path] = None):
+        if path_to_output_folder is None:
+            path_to_output_folder = Path.cwd()
+
         for aspect in self.aspects.values():
             for trajectory in aspect.trajectories.values():
-                print('Saving out CSV:', aspect.metadata['tracker_type'], aspect.name, trajectory.name)
-                trajectory.as_dataframe.to_csv(f"{aspect.metadata['tracker_type']}_{aspect.name}_{trajectory.name}.csv")
+                save_path = path_to_output_folder / f"{aspect.metadata['tracker_type']}_{aspect.name}_{trajectory.name}.csv"
+                trajectory.as_dataframe.to_csv(path_to_output_folder/f"{aspect.metadata['tracker_type']}_{aspect.name}_{trajectory.name}.csv")
+                print(f"Saved out {save_path}") 
 
-    def save_out_all_data_csv(self):
-        self.all_data_as_dataframe().to_csv('freemocap_data_by_frame.csv', index=False)
-        print("Data successfully saved to 'freemocap_data_by_frame.csv'")
+    def save_out_all_data_csv(self, path_to_output_folder: Optional[Path] = None):
+        if path_to_output_folder is None:
+            path_to_output_folder = Path.cwd()
+        save_path = path_to_output_folder / 'freemocap_data_by_frame.csv'    
+        self.all_data_as_dataframe().to_csv(save_path, index=False)
+        print(f"Data successfully saved to {save_path}")
 
-    def save_out_all_data_parquet(self):
+    def save_out_all_data_parquet(self, path_to_output_folder: Optional[Path] = None):
+        if path_to_output_folder is None:
+            path_to_output_folder = Path.cwd()
+
         dataframe = self.all_data_as_dataframe()
-
         dataframe.attrs['metadata'] = {
             'created_at': datetime.datetime.now().isoformat(),
             'created_with': 'skelly_models'
         }
-        dataframe.to_parquet('freemocap_data_by_frame.parquet')
-        print("Data successfully saved to 'freemocap_data_by_frame.parquet'")
+        save_path = path_to_output_folder / 'freemocap_data_by_frame.parquet'
+        dataframe.to_parquet(save_path)
+        print(f"Data successfully saved to f{save_path}")

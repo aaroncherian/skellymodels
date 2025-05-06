@@ -17,7 +17,9 @@ class Human(Actor):
         super().__init__(name)
         
         self.tracker = model_info.name
-        self.aspect_order = model_info.aspect_order_and_slices
+        self.aspect_order = model_info.order
+        self.tracked_point_slices = model_info.tracked_point_slices
+        self.landmark_slices = model_info.landmark_slices
         self.model_info = model_info
         
         self._initialize_aspects()
@@ -29,13 +31,13 @@ class Human(Actor):
         """
         self._add_body()
 
-        if HumanAspectNames.FACE.value in self.aspect_order.keys():
+        if HumanAspectNames.FACE.value in self.aspect_order:
             self._add_face()
 
-        if HumanAspectNames.LEFT_HAND.value in self.aspect_order.keys():
+        if HumanAspectNames.LEFT_HAND.value in self.aspect_order:
             self._add_left_hand()
         
-        if HumanAspectNames.RIGHT_HAND.value in self.aspect_order.keys():
+        if HumanAspectNames.RIGHT_HAND.value in self.aspect_order:
             self._add_right_hand()
 
     def _add_body(self):
@@ -82,31 +84,60 @@ class Human(Actor):
     @property
     def right_hand(self):
         return self.aspects.get(HumanAspectNames.RIGHT_HAND.value)
-
+    
     def add_tracked_points_numpy(self, tracked_points_numpy_array:np.ndarray):
         """
         Takes in the tracked points array, splits and categorizes it based on the ranges determined by the ModelInfo,
         and adds it as a tracked point Trajectory to the body, and optionally face/hands aspects 
         """
-        self.body.add_tracked_points(tracked_points_numpy_array[:,self.aspect_order[HumanAspectNames.BODY.value],:])
 
-        if HumanAspectNames.FACE.value in self.aspect_order.keys() and self.face is not None:
-            self.face.add_tracked_points(tracked_points_numpy_array[:,self.aspect_order[HumanAspectNames.FACE.value],:])
+        self.body.add_tracked_points(tracked_points_numpy_array[:,self.tracked_point_slices[HumanAspectNames.BODY.value],:])
 
-        if HumanAspectNames.LEFT_HAND.value in self.aspect_order.keys() and self.left_hand is not None:
-            self.left_hand.add_tracked_points(tracked_points_numpy_array[:,self.aspect_order[HumanAspectNames.LEFT_HAND.value],:])
+        if HumanAspectNames.FACE.value in self.tracked_point_slices and self.face is not None:
+            self.face.add_tracked_points(
+                tracked_points_numpy_array[:,self.tracked_point_slices[HumanAspectNames.FACE.value],:]
+                )
+            
+        if HumanAspectNames.LEFT_HAND.value in self.tracked_point_slices and self.left_hand is not None:
+            self.left_hand.add_tracked_points(
+                tracked_points_numpy_array[:,self.tracked_point_slices[HumanAspectNames.LEFT_HAND.value],:]
+                )
         
-        if HumanAspectNames.RIGHT_HAND.value in self.aspect_order.keys() and self.right_hand is not None:
-            self.right_hand.add_tracked_points(tracked_points_numpy_array[:,self.aspect_order[HumanAspectNames.RIGHT_HAND.value],:])
+        if HumanAspectNames.RIGHT_HAND.value in self.tracked_point_slices and self.right_hand is not None:
+            self.right_hand.add_tracked_points(
+                tracked_points_numpy_array[:,self.tracked_point_slices[HumanAspectNames.RIGHT_HAND.value],:]
+                )
+        
+    def add_landmarks_numpy_array(self, landmarks_numpy_array:np.ndarray):
+        """
+        Takes in landmark data, splits and categorizes it based on the ranges determined by the ModelInfo,
+        and adds it as a tracked point Trajectory to the body, and optionally face/hands aspects 
+        """
+        self.body.add_landmarks(landmarks_numpy_array[:,self.landmark_slices[HumanAspectNames.BODY.value],:])
+
+        if HumanAspectNames.FACE.value in self.landmark_slices and self.face is not None:
+            self.face.add_landmarks(
+                landmarks_numpy_array[:,self.landmark_slices[HumanAspectNames.FACE.value],:]
+                )
+        
+        if HumanAspectNames.LEFT_HAND.value in self.landmark_slices and self.left_hand is not None:
+            self.left_hand.add_landmarks(
+                landmarks_numpy_array[:,self.landmark_slices[HumanAspectNames.LEFT_HAND.value],:]
+                )
+
+        if HumanAspectNames.RIGHT_HAND.value in self.landmark_slices and self.right_hand is not None:
+            self.right_hand.add_landmarks(
+                landmarks_numpy_array[:,self.landmark_slices[HumanAspectNames.RIGHT_HAND.value],:]
+                )
 
     def add_reprojection_error_numpy(self, reprojection_error_data: np.ndarray):
-        self.body.add_reprojection_error(reprojection_error_data[:,self.aspect_order[HumanAspectNames.BODY.value]])
+        self.body.add_reprojection_error(reprojection_error_data[:, self.tracked_point_slices[HumanAspectNames.BODY.value]])
 
-        if HumanAspectNames.FACE.value in self.aspect_order.keys() and self.face is not None:
-            self.face.add_reprojection_error(reprojection_error_data[:,self.aspect_order[HumanAspectNames.FACE.value]])
+        if HumanAspectNames.FACE.value in self.tracked_point_slices and self.face is not None:
+            self.face.add_reprojection_error(reprojection_error_data[:, self.tracked_point_slices[HumanAspectNames.FACE.value]])
         
-        if HumanAspectNames.LEFT_HAND.value in self.aspect_order.keys() and self.left_hand is not None:
-            self.left_hand.add_reprojection_error(reprojection_error_data[:,self.aspect_order[HumanAspectNames.LEFT_HAND.value]])
-
-        if HumanAspectNames.RIGHT_HAND.value in self.aspect_order.keys() and self.right_hand is not None:
-            self.right_hand.add_reprojection_error(reprojection_error_data[:,self.aspect_order[HumanAspectNames.RIGHT_HAND.value]])
+        if HumanAspectNames.LEFT_HAND.value in self.tracked_point_slices and self.left_hand is not None:
+            self.left_hand.add_reprojection_error(reprojection_error_data[:, self.tracked_point_slices[HumanAspectNames.LEFT_HAND.value]])
+        
+        if HumanAspectNames.RIGHT_HAND.value in self.tracked_point_slices and self.right_hand is not None:
+            self.right_hand.add_reprojection_error(reprojection_error_data[:, self.tracked_point_slices[HumanAspectNames.RIGHT_HAND.value]])

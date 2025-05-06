@@ -61,6 +61,16 @@ class Aspect:
                                              marker_names=marker_names,
                                              virtual_marker_definitions=virtual_marker_definitions,
                                              segment_connections=segment_connections)
+        
+    def add_landmarks(self, landmarks_numpy_array: np.ndarray):
+        """Adding all markers (virtual markers included) to model"""
+        if self.anatomical_structure is None or self.anatomical_structure.tracked_point_names is None:
+            raise ValueError("Anatomical structure and tracked point names are required to add landmark data")
+        self.trajectories['3d_xyz'] = Trajectory(name = '3d_xyz',
+                                                 data = landmarks_numpy_array,
+                                                 marker_names = self.anatomical_structure.marker_names,
+                                                 segment_connections=self.anatomical_structure.segment_connections,
+                                                 )
 
     def add_tracked_points(self, tracked_points: np.ndarray):
         """Use tracked points to calculate trajectories, using virtual markers if included"""

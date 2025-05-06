@@ -12,7 +12,7 @@ class TrajectoryValidator(BaseModel):
     @model_validator(mode="after")
     def validate_data(self):
         if self.data.shape[1] != len(self.marker_names):
-            raise ValueError(f"Trajectory data must have the same number of markers as input name list. Data has {self.data.shape[1]} markers and list has {len(self.marker_names)} markers.")
+            raise ValueError(f"Trajectory data must have the same number of markers as input name list. Data has shape {self.data.shape} and list has {len(self.marker_names)} markers.")
 
     
 
@@ -71,6 +71,10 @@ class Trajectory:
             
             self._marker_names += list(virtual_marker_data.keys())
             self._trajectories.update(virtual_marker_data)
+
+    @property
+    def landmark_names(self):
+        return self._marker_names
 
     @property
     def data(self):  # TODO: elsewhere this is used for the numpy array, but here its a dictionary 

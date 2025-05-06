@@ -25,7 +25,6 @@ pprint([human.aspects])
 
 human.calculate() #does our COM/Rigid bones calculations
 
-
 human.save_out_numpy_data()
 human.save_out_csv_data()
 human.save_out_all_data_csv()
