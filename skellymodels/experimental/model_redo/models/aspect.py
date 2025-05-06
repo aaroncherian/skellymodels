@@ -69,7 +69,7 @@ class Aspect:
         
         self.add_trajectory(name='3d_xyz',
                             data=landmarks_numpy_array,
-                            marker_names=self.anatomical_structure.tracked_point_names,
+                            marker_names=self.anatomical_structure.marker_names,
                             segment_connections=self.anatomical_structure.segment_connections)
         
     def add_tracked_points(self, tracked_points: np.ndarray):

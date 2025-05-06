@@ -76,6 +76,7 @@ class Actor(ABC):
     def from_landmarks_numpy_array(cls, name:str, model_info:ModelInfo, landmarks_numpy_array:np.ndarray):
         actor = cls(name=name, model_info = model_info)
         actor.add_landmarks_numpy_array(landmarks_numpy_array=landmarks_numpy_array)
+        return actor
 
     def calculate(self, pipeline:CalculationPipeline = STANDARD_PIPELINE):
         for aspect in self.aspects.values():
