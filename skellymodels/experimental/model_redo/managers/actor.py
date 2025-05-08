@@ -132,7 +132,7 @@ class Actor(ABC):
             for trajectory in aspect.trajectories.values():
                 save_path = path_to_output_folder / f"{aspect.metadata['tracker_type']}_{aspect.name}_{trajectory.name}.npy"
                 np.save(save_path,
-                        trajectory.data)  # TODO: the .data is throwing a type error because this is sometimes a dict instead of an array
+                        trajectory.as_numpy)  # TODO: the .data is throwing a type error because this is sometimes a dict instead of an array
                 print(f"Saved out {save_path}")
 
     def save_out_csv_data(self, path_to_output_folder: Optional[Path] = None):

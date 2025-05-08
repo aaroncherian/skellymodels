@@ -59,10 +59,7 @@ class RigidBonesEnforcement(AnatomicalCalculation):
 
         rigid_marker_data = enforce_rigid_bones(
             marker_trajectories=trajectory.data,
-            segment_3d_positions=trajectory.segment_data,
-            segment_conections=trajectory._segment_connections, #segment connections could also come from anatomical structures. there's some figuring out to do here
             joint_hierarchy= aspect.anatomical_structure.joint_hierarchy
-
         )
 
         return CalculationResult(
