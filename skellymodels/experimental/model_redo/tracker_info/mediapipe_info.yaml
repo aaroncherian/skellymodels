@@ -148,6 +148,9 @@ aspects:
       right_heel:
         proximal: right_ankle
         distal: right_heel
+      left_heel:
+        proximal: left_ankle
+        distal: left_heel
       right_foot_bottom: 
         proximal: right_heel
         distal: right_foot_index

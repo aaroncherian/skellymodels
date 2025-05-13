@@ -33,7 +33,10 @@ class ModelInfo:
         self.aspects: Dict[str, AspectInfo] = self._parse_aspects(config=config)
         self.tracked_point_names: List[str] = [tp for aspect in self.aspects.values() for tp in aspect.tracked_points_names]
         self.num_tracked_points:str = sum([aspect.num_tracked_points for aspect in self.aspects.values()])
-        self.aspect_order_and_slices: Dict[str, slice] = self._get_aspect_order_and_slices(config)
+        self.order = config['order']
+        # self.aspect_order_and_slices: Dict[str, slice] = self._get_aspect_order_and_slices(config)
+        self.tracked_point_slices = self._build_slices(include_virtuals=False)
+        self.landmark_slices = self._build_slices(include_virtuals=True)
 
     def _load_config(self, config_path:Path):
         with open(config_path, 'r') as f:
@@ -62,17 +65,31 @@ class ModelInfo:
         
         return aspects
     
-    def _get_aspect_order_and_slices(self, config):
-        """
-        Get the proper order of every aspect included in the model info and how to slice it from a numpy array and put it into a dict
-        """
-        aspect_order_and_slices = {}
-        current_index = 0
-        for aspect in config['order']:
-            aspect_order_and_slices[aspect] = slice(current_index, current_index + self.aspects[aspect].num_tracked_points)
-            current_index = current_index + self.aspects[aspect].num_tracked_points
-        return aspect_order_and_slices
+    # def _get_aspect_order_and_slices(self, config):
+    #     """
+    #     Get the proper order of every aspect included in the model info and how to slice it from a numpy array and put it into a dict
+    #     """
+    #     aspect_order_and_slices = {}
+    #     current_index = 0
+    #     for aspect in config['order']:
+    #         aspect_order_and_slices[aspect] = slice(current_index, current_index + self.aspects[aspect].num_tracked_points)
+    #         current_index = current_index + self.aspects[aspect].num_tracked_points
+    #     return aspect_order_and_slices
 
+
+    def _build_slices(self, include_virtuals:bool) -> Dict[str, slice]:
+        """
+        Build slices for each aspect based on the configuration and whether to include virtual markers.
+        """
+        slices = {}
+        current_marker = 0
+        for aspect in self.order:
+            num_tracked_points = self.aspects[aspect].num_tracked_points
+            num_virtual_markers = len(self.aspects[aspect].virtual_marker_definitions) if self.aspects[aspect].virtual_marker_definitions else 0
+            num_landmarks = num_tracked_points + (num_virtual_markers if include_virtuals else 0)
+            slices[aspect] = slice(current_marker, current_marker + num_landmarks)
+            current_marker += num_landmarks
+        return slices
 
 
 
