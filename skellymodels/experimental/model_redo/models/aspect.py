@@ -97,6 +97,13 @@ class Aspect:
         self.add_trajectory(name='segment_com',
                             data=segment_center_of_mass,
                             marker_names=list(self.anatomical_structure.center_of_mass_definitions.keys()))
+        
+    def add_rigid_body_data(self, rigid_body_data: np.ndarray):
+        self.add_trajectory(name = "rigid_3d_xyz",
+                            data = rigid_body_data,
+                            marker_names = self.anatomical_structure.marker_names,
+                            segment_connections = self.anatomical_structure.segment_connections
+                            )
 
     def add_reprojection_error(self, reprojection_error_data: np.ndarray):
         # TODO: This could be a feature of the trajectory as well, but I'm leaning towards aspect taking care of it

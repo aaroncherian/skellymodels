@@ -72,10 +72,8 @@ class RigidBonesEnforcement(AnatomicalCalculation):
         if not results.success:
             return
         
-        aspect.add_trajectory(
-            name='rigid_3d_xyz', 
-            data=results.data['rigid_bones'], 
-            marker_names=aspect.anatomical_structure.marker_names
+        aspect.add_rigid_body_data(
+            rigid_body_data=results.data['rigid_bones']
         )
 
 
