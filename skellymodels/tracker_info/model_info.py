@@ -94,7 +94,13 @@ class ModelInfo:
                 raise KeyError(f"Aspect '{aspect}' is included in the aspect order of the YAML, but no configuration was found for it. Available aspects: {list(self.aspects.keys())}")
         return slices
 
-
+    @classmethod
+    def from_config_path(cls, config_path: Path|str):
+        """
+        Create a ModelInfo instance from a configuration file path.
+        """
+        return cls(config_path=Path(config_path))
+        
 
 class MediapipeModelInfo(ModelInfo):
     def __init__(self):
@@ -103,6 +109,7 @@ class MediapipeModelInfo(ModelInfo):
 class RTMPoseModelInfo(ModelInfo):
     def __init__(self):
         super().__init__(config_path = Path(__file__).parent/'rtmpose_model_info.yaml')
+
 
 
 f = 2
