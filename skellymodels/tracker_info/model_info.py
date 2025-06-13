@@ -84,11 +84,14 @@ class ModelInfo:
         slices = {}
         current_marker = 0
         for aspect in self.order:
-            num_tracked_points = self.aspects[aspect].num_tracked_points
-            num_virtual_markers = len(self.aspects[aspect].virtual_marker_definitions) if self.aspects[aspect].virtual_marker_definitions else 0
-            num_landmarks = num_tracked_points + (num_virtual_markers if include_virtuals else 0)
-            slices[aspect] = slice(current_marker, current_marker + num_landmarks)
-            current_marker += num_landmarks
+            try:
+                num_tracked_points = self.aspects[aspect].num_tracked_points
+                num_virtual_markers = len(self.aspects[aspect].virtual_marker_definitions) if self.aspects[aspect].virtual_marker_definitions else 0
+                num_landmarks = num_tracked_points + (num_virtual_markers if include_virtuals else 0)
+                slices[aspect] = slice(current_marker, current_marker + num_landmarks)
+                current_marker += num_landmarks
+            except KeyError:
+                raise KeyError(f"Aspect '{aspect}' is included in the aspect order of the YAML, but no configuration was found for it. Available aspects: {list(self.aspects.keys())}")
         return slices
 
 
@@ -97,7 +100,9 @@ class MediapipeModelInfo(ModelInfo):
     def __init__(self):
         super().__init__(config_path = Path(__file__).parent/'mediapipe_info.yaml')
 
-
+class RTMPoseModelInfo(ModelInfo):
+    def __init__(self):
+        super().__init__(config_path = Path(__file__).parent/'rtmpose_model_info.yaml')
 
 
 f = 2

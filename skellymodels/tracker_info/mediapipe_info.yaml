@@ -155,8 +155,8 @@ aspects:
         proximal: right_heel
         distal: right_foot_index
       left_foot_bottom:
-        proximal: left_ankle
-        distal: left_heel
+        proximal: left_heel
+        distal: left_foot_index
     
     center_of_mass_definitions:
       head:
