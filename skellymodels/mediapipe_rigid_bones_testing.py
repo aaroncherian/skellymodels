@@ -1,11 +1,8 @@
 from pathlib import Path
 import numpy as np
-
-from skellymodels.experimental.model_redo.managers.human import Human
-
+from skellymodels.managers.human import Human
 from pprint import pprint
-
-from skellymodels.experimental.model_redo.tracker_info.model_info import MediapipeModelInfo
+from skellymodels.tracker_info.model_info import MediapipeModelInfo
 
 
 model_info = MediapipeModelInfo()

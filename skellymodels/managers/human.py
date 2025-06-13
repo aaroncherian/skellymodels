@@ -1,10 +1,10 @@
 from enum import Enum
 import numpy as np
 
-from skellymodels.experimental.model_redo.models.aspect import Aspect
-from skellymodels.experimental.model_redo.managers.actor import Actor
-from skellymodels.experimental.model_redo.builders.anatomical_structure_builder import create_anatomical_structure_from_model_info
-from skellymodels.experimental.model_redo.tracker_info.model_info import ModelInfo
+from skellymodels.models.aspect import Aspect
+from skellymodels.managers.actor import Actor
+from skellymodels.builders.anatomical_structure_builder import create_anatomical_structure_from_model_info
+from skellymodels.tracker_info.model_info import ModelInfo
 class HumanAspectNames(Enum):
     BODY = "body"
     FACE = "face"

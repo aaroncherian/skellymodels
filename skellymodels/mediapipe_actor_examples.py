@@ -2,16 +2,16 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from skellymodels.experimental.model_redo.managers.actor import Actor
-from skellymodels.experimental.model_redo.utils.create_mediapipe_actor import create_aspects_for_mediapipe_human, split_data
-from skellymodels.experimental.model_redo.models import Aspect
-from skellymodels.experimental.model_redo.builders.anatomical_structure_builder import AnatomicalStructureBuilder
+from skellymodels.managers.actor import Actor
+from skellymodels.utils.create_mediapipe_actor import create_aspects_for_mediapipe_human, split_data
+from skellymodels.models import Aspect
+from skellymodels.builders.anatomical_structure_builder import AnatomicalStructureBuilder
 
 from skellytracker.trackers.mediapipe_tracker.mediapipe_model_info import MediapipeModelInfo
 from pprint import pprint
 
-from skellymodels.experimental.model_redo.fmc_anatomical_pipeline.calculate_center_of_mass import calculate_center_of_mass_from_trajectory
-from skellymodels.experimental.model_redo.fmc_anatomical_pipeline.enforce_rigid_bones import enforce_rigid_bones_from_trajectory
+from skellymodels.fmc_anatomical_pipeline.calculate_center_of_mass import calculate_center_of_mass_from_trajectory
+from skellymodels.fmc_anatomical_pipeline.enforce_rigid_bones import enforce_rigid_bones_from_trajectory
 
 ### CHOOSE DIRECTORY PATH
 path_to_data = Path(r"C:\Users\aaron\FreeMocap_Data\recording_sessions\freemocap_sample_data\output_data\raw_data\mediapipe_3dData_numFrames_numTrackedPoints_spatialXYZ.npy")

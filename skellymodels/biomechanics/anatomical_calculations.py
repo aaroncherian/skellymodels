@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
-from skellymodels.experimental.model_redo.models.aspect import Aspect
+from skellymodels.models.aspect import Aspect
 
-from skellymodels.experimental.model_redo.biomechanics.calculations.calculate_center_of_mass import calculate_center_of_mass
-from skellymodels.experimental.model_redo.biomechanics.calculations.enforce_rigid_bones import enforce_rigid_bones
-from skellymodels.experimental.model_redo.biomechanics.models.anatomical_calculation import AnatomicalCalculation, CalculationResult
+from skellymodels.biomechanics.calculations.calculate_center_of_mass import calculate_center_of_mass
+from skellymodels.biomechanics.calculations.enforce_rigid_bones import enforce_rigid_bones
+from skellymodels.biomechanics.models.anatomical_calculation import AnatomicalCalculation, CalculationResult
 
 
 class CenterOfMassCalculation(AnatomicalCalculation):

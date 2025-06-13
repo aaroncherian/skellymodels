@@ -1,6 +1,6 @@
-from skellymodels.experimental.model_redo.managers.actor import Actor
-from skellymodels.experimental.model_redo.models import Aspect
-from skellymodels.experimental.model_redo.builders.anatomical_structure_builder import AnatomicalStructureBuilder
+from skellymodels.managers.actor import Actor
+from skellymodels.models import Aspect
+from skellymodels.builders.anatomical_structure_builder import AnatomicalStructureBuilder
 
 from skellytracker.trackers.mediapipe_tracker.mediapipe_model_info import MediapipeModelInfo
 

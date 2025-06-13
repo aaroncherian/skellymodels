@@ -3,11 +3,11 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 import datetime
-from skellymodels.experimental.model_redo.models.aspect import Aspect
+from skellymodels.models.aspect import Aspect
 from typing import Dict, Optional
 
-from skellymodels.experimental.model_redo.tracker_info.model_info import ModelInfo
-from skellymodels.experimental.model_redo.biomechanics.anatomical_calculations import CalculationPipeline, STANDARD_PIPELINE
+from skellymodels.tracker_info.model_info import ModelInfo
+from skellymodels.biomechanics.anatomical_calculations import CalculationPipeline, STANDARD_PIPELINE
 
 from pathlib import Path
 class Actor(ABC):

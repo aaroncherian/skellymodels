@@ -1,5 +1,5 @@
-from skellymodels.experimental.model_redo.models.anatomical_structure import AnatomicalStructure
-from skellymodels.experimental.model_redo.tracker_info.model_info import ModelInfo
+from skellymodels.models.anatomical_structure import AnatomicalStructure
+from skellymodels.tracker_info.model_info import ModelInfo
 
 from pydantic import BaseModel, field_validator, model_validator
 from typing import Optional, List, Dict, Union

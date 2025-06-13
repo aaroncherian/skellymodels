@@ -1,10 +1,8 @@
 from pathlib import Path
 import numpy as np
-from typing import Dict, List, Union, Optional
-import matplotlib.pyplot as plt
-
-from skellymodels.experimental.model_redo.managers.human import Human
-from skellymodels.experimental.model_redo.tracker_info.model_info import MediapipeModelInfo
+from typing import Dict
+from skellymodels.managers.human import Human
+from skellymodels.tracker_info.model_info import MediapipeModelInfo
 
 
 def create_segment_data(

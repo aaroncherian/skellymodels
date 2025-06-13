@@ -1,11 +1,11 @@
-from skellymodels.experimental.model_redo.builders.anatomical_structure_builder import create_anatomical_structure_from_model_info
-from skellymodels.experimental.model_redo.tracker_info.model_info import ModelInfo
+from skellymodels.builders.anatomical_structure_builder import create_anatomical_structure_from_model_info
+from skellymodels.tracker_info.model_info import ModelInfo
 
-from skellymodels.experimental.model_redo.models.anatomical_structure import AnatomicalStructure
-from skellymodels.experimental.model_redo.models.error import Error
-from skellymodels.experimental.model_redo.models.trajectory import Trajectory
+from skellymodels.models.anatomical_structure import AnatomicalStructure
+from skellymodels.models.error import Error
+from skellymodels.models.trajectory import Trajectory
 
-# from skellymodels.experimental.model_redo.biomechanics.biomechanics_wrappers import (
+# from skellymodels.biomechanics.biomechanics_wrappers import (
 #     calculate_center_of_mass,
 #     enforce_rigid_bones_from_trajectory,
 # )
