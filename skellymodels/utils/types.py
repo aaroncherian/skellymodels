@@ -15,4 +15,3 @@ class SegmentCenterOfMassDefinition(TypedDict):
     segment_com_length : float
     segment_com_percentage: float
 
-JointHierarchy: TypeAlias = Dict[MarkerName, List[MarkerName]]

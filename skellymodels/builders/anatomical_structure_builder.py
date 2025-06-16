@@ -100,15 +100,6 @@ def create_anatomical_structure_from_model_info(model_info:ModelInfo) -> Dict[st
 class TrackedPointsValidator(BaseModel):
     tracked_point_names: List[MarkerName]
 
-    @field_validator("tracked_point_names")
-    @classmethod
-    def validate_tracked_point_names(cls, tracked_point_names: List[str]):
-        if not isinstance(tracked_point_names, list):
-            raise ValueError("Tracked point names must be a list.")
-        if not all(isinstance(name, str) for name in tracked_point_names):
-            raise ValueError("All tracked point names in list must be strings.")
-        return tracked_point_names
-
 class VirtualMarkerValidator(BaseModel):
     virtual_markers: Dict[str, VirtualMarkerDefinition]
     tracked_point_names: List[MarkerName]
@@ -130,13 +121,6 @@ class VirtualMarkerValidator(BaseModel):
                     f"Currently there are {len(marker_names)} names and {len(marker_weights)} weights."
                 )
 
-            if not isinstance(marker_names, list) or not all(isinstance(name, str) for name in marker_names):
-                raise ValueError(f"Marker names must be a list of strings for {marker_names}.")
-
-            if not isinstance(marker_weights, list) or not all(
-                isinstance(weight, (int, float)) for weight in marker_weights
-            ):
-                raise ValueError(f"Marker weights must be a list of numbers for {virtual_marker_name}.")
 
             # Check if all marker names are in our valid set
             invalid_markers = [name for name in marker_names if name not in valid_marker_names]
