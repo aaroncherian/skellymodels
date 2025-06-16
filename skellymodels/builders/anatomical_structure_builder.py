@@ -3,6 +3,7 @@ from skellymodels.tracker_info.model_info import ModelInfo
 
 from pydantic import BaseModel, field_validator, model_validator
 from typing import Optional, List, Dict, Union
+from skellymodels.utils.types import MarkerName, SegmentName, VirtualMarkerDefinition, SegmentConnection, SegmentCenterOfMassDefinition
 
 class AnatomicalStructureBuilder:
     """
@@ -13,11 +14,11 @@ class AnatomicalStructureBuilder:
 
     """
     def __init__(self):
-        self.tracked_point_names: Optional[List[str]] = None
-        self.virtual_markers_definitions: Optional[Dict[str, Dict[str, List[Union[float, str]]]]] = None
-        self.segment_connections: Optional[Dict[str, Dict[str, str]]] = None
-        self.center_of_mass_definitions: Optional[Dict[str, Dict[str, float]]] = None
-        self.joint_hierarchy: Optional[Dict[str, List[str]]] = None
+        self.tracked_point_names: Optional[List[MarkerName]] = None
+        self.virtual_markers_definitions: Optional[Dict[str, VirtualMarkerDefinition]] = None
+        self.segment_connections: Optional[Dict[SegmentName, SegmentConnection]] = None
+        self.center_of_mass_definitions: Optional[Dict[SegmentName, SegmentCenterOfMassDefinition]] = None
+        self.joint_hierarchy: Optional[Dict[MarkerName, List[MarkerName]]] = None
 
     @property
     def _marker_names(self):
@@ -28,12 +29,12 @@ class AnatomicalStructureBuilder:
             markers.extend(self.virtual_markers_definitions.keys())
         return markers
 
-    def with_tracked_points(self, tracked_point_names: List[str]):
+    def with_tracked_points(self, tracked_point_names: List[MarkerName]):
         TrackedPointsValidator(tracked_point_names=tracked_point_names)
         self.tracked_point_names = tracked_point_names.copy()
         return self
 
-    def with_virtual_markers(self, virtual_marker_definitions: Optional[Dict[str, Dict[str, List[Union[float, str]]]]]):
+    def with_virtual_markers(self, virtual_marker_definitions: Optional[Dict[str, VirtualMarkerDefinition]]):
         
         if virtual_marker_definitions is not None:
             if not self.tracked_point_names:
@@ -44,7 +45,7 @@ class AnatomicalStructureBuilder:
         self.virtual_markers_definitions = virtual_marker_definitions
         return self
 
-    def with_segment_connections(self, segment_connections: Optional[Dict[str, Dict[str, str]]]):
+    def with_segment_connections(self, segment_connections: Optional[Dict[SegmentName, SegmentConnection]]):
 
         if segment_connections is not None:
             SegmentConnectionsValidator(segment_connections=segment_connections,
@@ -53,7 +54,7 @@ class AnatomicalStructureBuilder:
         self.segment_connections = segment_connections
         return self
 
-    def with_center_of_mass(self, center_of_mass_definitions: Optional[Dict[str, Dict[str, float]]]):
+    def with_center_of_mass(self, center_of_mass_definitions: Optional[Dict[SegmentName, SegmentCenterOfMassDefinition]]):
         
         if center_of_mass_definitions is not None:
             if not self.segment_connections:
@@ -64,7 +65,7 @@ class AnatomicalStructureBuilder:
         self.center_of_mass_definitions = center_of_mass_definitions
         return self
     
-    def with_joint_hierarchy(self,joint_hierarchy: Optional[Dict[str, List[str]]]):
+    def with_joint_hierarchy(self,joint_hierarchy: Optional[Dict[MarkerName, List[MarkerName]]]):
         if joint_hierarchy is not None:
             JointHierarchyValidator(joint_hierarchy=joint_hierarchy,
                                     marker_names=self._marker_names)
@@ -97,7 +98,7 @@ def create_anatomical_structure_from_model_info(model_info:ModelInfo) -> Dict[st
         return structures
 
 class TrackedPointsValidator(BaseModel):
-    tracked_point_names: List[str]
+    tracked_point_names: List[MarkerName]
 
     @field_validator("tracked_point_names")
     @classmethod
@@ -109,8 +110,8 @@ class TrackedPointsValidator(BaseModel):
         return tracked_point_names
 
 class VirtualMarkerValidator(BaseModel):
-    virtual_markers: Dict[str, Dict[str, List[Union[float, str]]]]
-    tracked_point_names: List[str]
+    virtual_markers: Dict[str, VirtualMarkerDefinition]
+    tracked_point_names: List[MarkerName]
 
     @model_validator(mode="after")
     def validate_virtual_markers(self):
@@ -158,8 +159,8 @@ class VirtualMarkerValidator(BaseModel):
         return self
 
 class SegmentConnectionsValidator(BaseModel):
-    segment_connections: Dict[str, Dict[str, str]]
-    marker_names: List[str]
+    segment_connections: Dict[SegmentName, SegmentConnection]
+    marker_names: List[MarkerName]
 
     @model_validator(mode="after")
     def validate_segment_connections(self):
@@ -182,8 +183,8 @@ class SegmentConnectionsValidator(BaseModel):
         return self
 
 class CenterOfMassValidator(BaseModel):
-    center_of_mass_definitions: Dict[str, Dict[str, float]]
-    segment_connections: Dict[str, Dict[str, str]]
+    center_of_mass_definitions: Dict[SegmentName, SegmentCenterOfMassDefinition]
+    segment_connections: Dict[SegmentName, SegmentConnection]
 
     @model_validator(mode="after")
     def validate_center_of_mass(self):
@@ -197,8 +198,8 @@ class CenterOfMassValidator(BaseModel):
 
 
 class JointHierarchyValidator(BaseModel):
-    joint_hierarchy: Dict[str, List[str]]
-    marker_names: List[str]
+    joint_hierarchy: Dict[MarkerName, List[MarkerName]]
+    marker_names: List[MarkerName]
 
     @model_validator(mode="after")
     def validate_joint_hierarchy(self):
