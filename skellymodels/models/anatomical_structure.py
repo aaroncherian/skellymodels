@@ -1,19 +1,19 @@
-from dataclasses import dataclass
-from typing import Dict, List, Optional, Union
+from pydantic import BaseModel
+from typing import Dict, List, Optional
+from skellymodels.utils.types import MarkerName, SegmentName, VirtualMarkerDefinition, SegmentConnection, SegmentCenterOfMassDefinition
 
-@dataclass
-class AnatomicalStructure:
+class AnatomicalStructure(BaseModel):
     """A data class representing the anatomical structure of a tracked object, defining its
     landmarks, virtual markers, segments, and center of mass definitions and joint hierarchy. 
     The latter three are used in calculating center of mass and enforcing rigid bones for the object.
 
     The structure itself is built by the AnatomicalStructureBuilder.
     """
-    tracked_point_names: List[str]
-    virtual_markers_definitions: Optional[Dict[str, Dict[str, List[Union[float, str]]]]] = None
-    segment_connections: Optional[Dict[str, Dict[str, str]]] = None
-    center_of_mass_definitions: Optional[Dict[str, Dict[str, float]]] = None
-    joint_hierarchy: Optional[Dict[str, List[str]]] = None
+    tracked_point_names: List[MarkerName]
+    virtual_markers_definitions: Optional[Dict[str, VirtualMarkerDefinition]] = None
+    segment_connections: Optional[Dict[SegmentName, SegmentConnection]] = None
+    center_of_mass_definitions: Optional[Dict[SegmentName, SegmentCenterOfMassDefinition]] = None
+    joint_hierarchy: Optional[Dict[MarkerName, List[MarkerName]]] = None
 
     @property
     def marker_names(self):
