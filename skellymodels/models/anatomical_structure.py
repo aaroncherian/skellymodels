@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Dict, List, Optional
+from typing import Dict, List
 from skellymodels.utils.types import MarkerName, SegmentName, VirtualMarkerDefinition, SegmentConnection, SegmentCenterOfMassDefinition
 
 class AnatomicalStructure(BaseModel):
@@ -10,10 +10,10 @@ class AnatomicalStructure(BaseModel):
     The structure itself is built by the AnatomicalStructureBuilder.
     """
     tracked_point_names: List[MarkerName]
-    virtual_markers_definitions: Optional[Dict[str, VirtualMarkerDefinition]] = None
-    segment_connections: Optional[Dict[SegmentName, SegmentConnection]] = None
-    center_of_mass_definitions: Optional[Dict[SegmentName, SegmentCenterOfMassDefinition]] = None
-    joint_hierarchy: Optional[Dict[MarkerName, List[MarkerName]]] = None
+    virtual_markers_definitions: Dict[str, VirtualMarkerDefinition]|None = None
+    segment_connections: Dict[SegmentName, SegmentConnection]|None = None
+    center_of_mass_definitions: Dict[SegmentName, SegmentCenterOfMassDefinition]|None = None
+    joint_hierarchy: Dict[MarkerName, List[MarkerName]]|None = None
 
     @property
     def marker_names(self):

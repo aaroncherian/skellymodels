@@ -2,7 +2,7 @@ from pydantic import BaseModel, ConfigDict, model_validator
 import numpy as np
 import pandas as pd
 from typing import Dict, List
-
+from skellymodels.utils.types import MarkerName, SegmentName, VirtualMarkerDefinition, SegmentConnection
 
 class TrajectoryValidator(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
@@ -41,9 +41,9 @@ class Trajectory:
 
     def __init__(self, name: str, 
                  data: np.ndarray, 
-                 marker_names: List[str], 
-                 virtual_marker_definitions: Dict | None = None, 
-                 segment_connections: Dict | None = None):
+                 marker_names: List[MarkerName], 
+                 virtual_marker_definitions: Dict[str, VirtualMarkerDefinition] | None = None, 
+                 segment_connections: Dict[SegmentName, SegmentConnection] | None = None):
         self.name = name
         self._trajectories = {}
         self._tracked_point_names = marker_names

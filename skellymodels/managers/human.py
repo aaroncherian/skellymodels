@@ -3,7 +3,6 @@ import numpy as np
 
 from skellymodels.models.aspect import Aspect
 from skellymodels.managers.actor import Actor
-from skellymodels.builders.anatomical_structure_builder import create_anatomical_structure_from_model_info
 from skellymodels.tracker_info.model_info import ModelInfo
 class HumanAspectNames(Enum):
     BODY = "body"

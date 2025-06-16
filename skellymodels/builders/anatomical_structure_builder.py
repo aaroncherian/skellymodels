@@ -2,7 +2,7 @@ from skellymodels.models.anatomical_structure import AnatomicalStructure
 from skellymodels.tracker_info.model_info import ModelInfo
 
 from pydantic import BaseModel, field_validator, model_validator
-from typing import Optional, List, Dict, Union
+from typing import  List, Dict
 from skellymodels.utils.types import MarkerName, SegmentName, VirtualMarkerDefinition, SegmentConnection, SegmentCenterOfMassDefinition
 
 class AnatomicalStructureBuilder:
@@ -14,11 +14,11 @@ class AnatomicalStructureBuilder:
 
     """
     def __init__(self):
-        self.tracked_point_names: Optional[List[MarkerName]] = None
-        self.virtual_markers_definitions: Optional[Dict[str, VirtualMarkerDefinition]] = None
-        self.segment_connections: Optional[Dict[SegmentName, SegmentConnection]] = None
-        self.center_of_mass_definitions: Optional[Dict[SegmentName, SegmentCenterOfMassDefinition]] = None
-        self.joint_hierarchy: Optional[Dict[MarkerName, List[MarkerName]]] = None
+        self.tracked_point_names: List[MarkerName]|None = None
+        self.virtual_markers_definitions: Dict[str, VirtualMarkerDefinition]|None = None
+        self.segment_connections: Dict[SegmentName, SegmentConnection]|None = None 
+        self.center_of_mass_definitions: Dict[SegmentName, SegmentCenterOfMassDefinition]|None = None
+        self.joint_hierarchy: Dict[MarkerName, List[MarkerName]]|None = None
 
     @property
     def _marker_names(self):
@@ -34,7 +34,7 @@ class AnatomicalStructureBuilder:
         self.tracked_point_names = tracked_point_names.copy()
         return self
 
-    def with_virtual_markers(self, virtual_marker_definitions: Optional[Dict[str, VirtualMarkerDefinition]]):
+    def with_virtual_markers(self, virtual_marker_definitions: Dict[str, VirtualMarkerDefinition]|None):
         
         if virtual_marker_definitions is not None:
             if not self.tracked_point_names:
@@ -45,7 +45,7 @@ class AnatomicalStructureBuilder:
         self.virtual_markers_definitions = virtual_marker_definitions
         return self
 
-    def with_segment_connections(self, segment_connections: Optional[Dict[SegmentName, SegmentConnection]]):
+    def with_segment_connections(self, segment_connections: Dict[SegmentName, SegmentConnection]|None):
 
         if segment_connections is not None:
             SegmentConnectionsValidator(segment_connections=segment_connections,
@@ -54,7 +54,7 @@ class AnatomicalStructureBuilder:
         self.segment_connections = segment_connections
         return self
 
-    def with_center_of_mass(self, center_of_mass_definitions: Optional[Dict[SegmentName, SegmentCenterOfMassDefinition]]):
+    def with_center_of_mass(self, center_of_mass_definitions: Dict[SegmentName, SegmentCenterOfMassDefinition]|None):
         
         if center_of_mass_definitions is not None:
             if not self.segment_connections:
@@ -65,7 +65,7 @@ class AnatomicalStructureBuilder:
         self.center_of_mass_definitions = center_of_mass_definitions
         return self
     
-    def with_joint_hierarchy(self,joint_hierarchy: Optional[Dict[MarkerName, List[MarkerName]]]):
+    def with_joint_hierarchy(self,joint_hierarchy: Dict[MarkerName, List[MarkerName]]|None):
         if joint_hierarchy is not None:
             JointHierarchyValidator(joint_hierarchy=joint_hierarchy,
                                     marker_names=self._marker_names)
