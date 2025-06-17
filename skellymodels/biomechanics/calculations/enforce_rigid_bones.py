@@ -2,44 +2,10 @@ from copy import deepcopy
 import numpy as np
 from typing import Dict, List, Union,Tuple
 from collections import deque
-
-
-# def calculate_bone_lengths_and_statistics(
-#     segment_data: Dict[str, Dict[str, np.ndarray]]
-# ) -> Dict[str, Dict[str, Union[np.ndarray, float]]]:
-#     """
-#     Calculates bone lengths for each frame and their statistics (median and standard deviation)
-#     based on marker positions and segment connections.
-
-#     Parameters:
-#     - segment_data: A dictionary defining the segments (bones) with segment names as keys
-#       and dictionaries with 'proximal' and 'distal' marker xyz locations as values.
-
-#     Returns:
-#     - A dictionary with segment names as keys and dictionaries with lengths, median lengths,
-#       and standard deviations as values.
-#     """
-#     bone_statistics = {}
-
-#     for segment_name, segment in segment_data.items():
-#         proximal_positions = segment['proximal']
-#         distal_positions = segment['distal']
-
-#         lengths = np.linalg.norm(distal_positions - proximal_positions, axis=1)
-
-#         median_length = np.nanmedian(lengths)
-#         stdev_length = np.nanstd(lengths)
-
-#         bone_statistics[segment_name] = {
-#             "lengths": lengths, 
-#             "median": median_length, 
-#             "stdev": stdev_length
-#         }
-
-#     return bone_statistics
+from skellymodels.utils.types import MarkerName
 
 def calculate_bone_lengths_and_statistics(
-        marker_trajectories: Dict[str, np.ndarray],
+        marker_trajectories: Dict[MarkerName, np.ndarray],
         joint_hierarchy: Dict[str, List[str]],
 ) -> Dict[Tuple[str, str], Dict[str, float]]:
     bone_stats = {}
@@ -147,7 +113,7 @@ def merge_rigid_marker_data(rigid_marker_data: Dict[str, np.ndarray]) -> np.ndar
 
 
 def rigidify_forward_pass(
-        marker_trajectories: Dict[str, np.ndarray],
+        marker_trajectories: Dict[MarkerName, np.ndarray],
         joint_hierarchy: Dict[str, List[str]],
         bone_stats: Dict[str, Dict[str, Union[np.ndarray, float]]],
 ):
@@ -184,7 +150,7 @@ def rigidify_forward_pass(
 
     
 
-def enforce_rigid_bones(marker_trajectories:np.ndarray,
+def enforce_rigid_bones(marker_trajectories:dict[MarkerName, np.ndarray],
                         joint_hierarchy: Dict[str, List[str]]
                         ):
     
