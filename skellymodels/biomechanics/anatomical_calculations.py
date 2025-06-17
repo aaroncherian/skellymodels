@@ -58,7 +58,7 @@ class RigidBonesEnforcement(AnatomicalCalculation):
         trajectory = aspect.trajectories['3d_xyz']
 
         rigid_marker_data = enforce_rigid_bones(
-            marker_trajectories=trajectory.data,
+            marker_trajectories=trajectory.as_dict,
             joint_hierarchy= aspect.anatomical_structure.joint_hierarchy
         )
 

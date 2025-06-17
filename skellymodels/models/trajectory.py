@@ -18,7 +18,7 @@ class Trajectory(BaseModel):
         return self.array
     
     @property
-    def as_dict(self) -> dict[str, np.ndarray]:
+    def as_dict(self) -> dict[MarkerName, np.ndarray]:
         return {n: self.array[:, i, :]
             for i, n in enumerate(self.landmark_names)}
 
