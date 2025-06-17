@@ -1,9 +1,11 @@
 from skellymodels.builders.anatomical_structure_builder import create_anatomical_structure_from_model_info
 from skellymodels.tracker_info.model_info import ModelInfo
-
+from skellymodels.builders.trajectory_builder import TrajectoryBuilder
 from skellymodels.models.anatomical_structure import AnatomicalStructure
 from skellymodels.models.error import Error
 from skellymodels.models.trajectory import Trajectory
+from skellymodels.utils.types import MarkerName, SegmentName, VirtualMarkerDefinition, SegmentConnection
+
 
 # from skellymodels.biomechanics.biomechanics_wrappers import (
 #     calculate_center_of_mass,
@@ -37,7 +39,13 @@ class Aspect:
         self.reprojection_error: Optional[Error] = None
         self.metadata: Dict[
             str, Any] = {} if metadata is None else metadata  # TODO: Is it worth making a data class for this? Will we always want tracker type named or is it optional?
-    
+        
+        self._builder = TrajectoryBuilder(
+            tracked_point_names=anatomical_structure.tracked_point_names,
+            virtual_marker_definitions=anatomical_structure.virtual_markers_definitions,
+            segment_connections=anatomical_structure.segment_connections
+        )
+
     @classmethod
     def from_model_info(cls, name: str, model_info: ModelInfo, metadata: Optional[Dict[str, Any]] = None):
         """ Class method to create an Aspect from a ModelInfo instance
@@ -50,26 +58,33 @@ class Aspect:
         anatomical_structure_dict = create_anatomical_structure_from_model_info(model_info=model_info)
         return cls(name=name, anatomical_structure=anatomical_structure_dict[name], metadata=metadata)
 
-    def add_trajectory(self, name: str,
+    def add_trajectory(self, 
+                       name: str,
                        data: np.ndarray,
-                       marker_names: List[str],
-                       virtual_marker_definitions: Dict | None = None,
-                       segment_connections: Dict | None = None):
+                       tracked_point_names: List[MarkerName],
+                       virtual_marker_definitions: Dict[str, VirtualMarkerDefinition] | None = None,
+                       segment_connections: Dict[SegmentName, SegmentConnection] | None = None):
         """Add a trajectory to the aspect"""
-        self.trajectories[name] = Trajectory(name=name,
-                                             data=data,
-                                             marker_names=marker_names,
-                                             virtual_marker_definitions=virtual_marker_definitions,
-                                             segment_connections=segment_connections)
+        builder = TrajectoryBuilder(
+            tracked_point_names=tracked_point_names,
+            virtual_marker_definitions=virtual_marker_definitions,
+            segment_connections=segment_connections
+        )
+
+        self.trajectories[name] = builder.build(
+            name = name,
+            data_array=data
+        )
         
     def add_landmarks(self, landmarks_numpy_array: np.ndarray):
         """Adding all markers (virtual markers included) to model"""
         if self.anatomical_structure is None or self.anatomical_structure.tracked_point_names is None:
             raise ValueError("Anatomical structure and tracked point names are required to add landmark data")
         
+        
         self.add_trajectory(name='3d_xyz',
                             data=landmarks_numpy_array,
-                            marker_names=self.anatomical_structure.marker_names,
+                            tracked_point_names =self.anatomical_structure.landmark_names,
                             segment_connections=self.anatomical_structure.segment_connections)
         
     def add_tracked_points(self, tracked_points: np.ndarray):
@@ -79,7 +94,7 @@ class Aspect:
         
         self.add_trajectory(name = '3d_xyz',
                             data = tracked_points,
-                            marker_names = self.anatomical_structure.tracked_point_names,
+                            tracked_point_names = self.anatomical_structure.tracked_point_names,
                             virtual_marker_definitions = self.anatomical_structure.virtual_markers_definitions,
                             segment_connections = self.anatomical_structure.segment_connections)
 
@@ -87,7 +102,7 @@ class Aspect:
 
         self.add_trajectory(name='total_body_com',
                             data=total_body_center_of_mass,
-                            marker_names=['total_body_com']
+                            tracked_point_names=['total_body_com']
                             )
 
     def add_segment_center_of_mass(self, segment_center_of_mass: np.ndarray):
@@ -96,12 +111,12 @@ class Aspect:
                 "Anatomical structure and center of mass definitions are required to add segment center of mass.")
         self.add_trajectory(name='segment_com',
                             data=segment_center_of_mass,
-                            marker_names=list(self.anatomical_structure.center_of_mass_definitions.keys()))
+                            tracked_point_names=list(self.anatomical_structure.center_of_mass_definitions.keys()))
         
     def add_rigid_body_data(self, rigid_body_data: np.ndarray):
         self.add_trajectory(name = "rigid_3d_xyz",
                             data = rigid_body_data,
-                            marker_names = self.anatomical_structure.marker_names,
+                            tracked_point_names = self.anatomical_structure.marker_names,
                             segment_connections = self.anatomical_structure.segment_connections
                             )
 

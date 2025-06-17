@@ -23,6 +23,13 @@ class AnatomicalStructure(BaseModel):
         return markers
 
     @property
+    def landmark_names(self):
+        landmark_names = self.tracked_point_names.copy()
+        if self.virtual_markers_definitions:
+            landmark_names.extend(self.virtual_markers_definitions.keys())
+        return landmark_names
+
+    @property
     def virtual_marker_names(self):
         if not self.virtual_markers_definitions:
             return []
