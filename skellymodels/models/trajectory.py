@@ -12,6 +12,17 @@ class Trajectory(BaseModel):
     segment_connections: Dict[SegmentName, SegmentConnection] | None = None
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
+    @model_validator(mode="after")
+    def _check_shape(self):
+        if self.array.shape[1] != len(self.landmark_names):
+            raise ValueError(
+                f"{self.name}: data has {self.array.shape[1]} columns but "
+                f"{len(self.landmark_names)} marker names supplied"
+            )
+        if self.array.shape[2] != 3:
+            raise ValueError(f"{self.name}: last dim must be 3 (xyz)")
+        return self
+
     @property
     def as_array(self) -> np.ndarray:
         return self.array
