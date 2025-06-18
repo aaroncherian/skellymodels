@@ -30,7 +30,7 @@ class TrajectoryBuilder:
             self,
             name: str,
             data_array: np.ndarray
-    ):
+    ) -> Trajectory:
         landmark_names = self.tracked_point_names.copy()
         output_array_as_list: list[np.ndarray] = [data_array]
 

@@ -16,13 +16,6 @@ class AnatomicalStructure(BaseModel):
     joint_hierarchy: Dict[MarkerName, List[MarkerName]]|None = None
 
     @property
-    def marker_names(self):
-        markers = self.tracked_point_names.copy()
-        if self.virtual_markers_definitions:
-            markers.extend(self.virtual_markers_definitions.keys())
-        return markers
-
-    @property
     def landmark_names(self):
         landmark_names = self.tracked_point_names.copy()
         if self.virtual_markers_definitions:

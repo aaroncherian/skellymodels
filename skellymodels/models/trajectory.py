@@ -7,7 +7,6 @@ import warnings
 class Trajectory(BaseModel):
     name: str
     array: np.ndarray
-    tracked_point_names: List[MarkerName]
     landmark_names: List[MarkerName]
     virtual_marker_definitions: Dict[str, VirtualMarkerDefinition] | None = None
     segment_connections: Dict[SegmentName, SegmentConnection] | None = None
@@ -41,14 +40,6 @@ class Trajectory(BaseModel):
     @property
     def num_markers(self) -> int:
         return self.array.shape[1]
-    
-    @property
-    def landmark_names(self) -> list[MarkerName]:
-        return self.landmark_names
-    
-    @property
-    def tracked_point_names(self) -> list[MarkerName]:
-        return self.tracked_point_names
     
     @property
     def segment_data(self) -> Dict[str, Dict[str, np.ndarray]]:

@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from skellymodels.models.aspect import Aspect
+from skellymodels.models.trajectory import Trajectory
 
 from skellymodels.biomechanics.calculations.calculate_center_of_mass import calculate_center_of_mass
 from skellymodels.biomechanics.calculations.enforce_rigid_bones import enforce_rigid_bones
@@ -36,13 +37,22 @@ class CenterOfMassCalculation(AnatomicalCalculation):
         if not results.success:
             return
         
-        aspect.add_segment_center_of_mass(results.data['segment_com'])
-        aspect.add_total_body_center_of_mass(results.data['total_body_com'])
-        f = 2
+        tb_com_trajectory = Trajectory(
+            name='total_body_com',
+            array=results.data['total_body_com'],
+            landmark_names =['total_body_com'],
+        )
 
+        segment_com_trajectory = Trajectory(
+            name='segment_com',
+            array=results.data['segment_com'],
+            landmark_names=list(aspect.anatomical_structure.center_of_mass_definitions.keys()),
+        )
 
-    
-
+        aspect.add_trajectory(
+            {'total_body_com': tb_com_trajectory,
+            'segment_com': segment_com_trajectory}
+        )
 
 class RigidBonesEnforcement(AnatomicalCalculation):
     def calculate(self, aspect:Aspect) -> CalculationResult:
@@ -72,11 +82,14 @@ class RigidBonesEnforcement(AnatomicalCalculation):
         if not results.success:
             return
         
-        aspect.add_rigid_body_data(
-            rigid_body_data=results.data['rigid_bones']
-        )
-
-
+        aspect.add_trajectory(
+            {'rigid_3d_xyz' : Trajectory(
+            name='rigid_3d_xyz',
+            array=results.data['rigid_bones'],
+            landmark_names=aspect.anatomical_structure.landmark_names,
+            segment_connections=aspect.anatomical_structure.segment_connections
+        )})
+        
 
 class CalculationPipeline:
     def __init__(self, tasks: list[AnatomicalCalculation]):
@@ -86,7 +99,7 @@ class CalculationPipeline:
         """Instantiate tasks and run calculate_and_store on the given aspect."""
         results_log = []
         for task_cls in self.tasks:
-            task_instance = task_cls()  
+            task_instance:AnatomicalCalculation = task_cls()  
             results = task_instance.calculate_and_store(aspect)
 
             if results:

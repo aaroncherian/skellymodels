@@ -30,8 +30,11 @@ class Aspect:
         metadata (Dict[str, Any]): Additional information about the aspect
     """
 
-    def __init__(self, name: str, anatomical_structure: AnatomicalStructure,
-                 trajectories: Optional[Dict[str, Trajectory]] = None, metadata: Optional[Dict[str, Any]] = None):
+    def __init__(self, name: str, 
+                 anatomical_structure: AnatomicalStructure,
+                 trajectories: Optional[Dict[str, Trajectory]] = None, 
+                 metadata: Optional[Dict[str, Any]] = None):
+        
         self.name = name
         self.anatomical_structure = anatomical_structure
         self.trajectories: Dict[
@@ -39,12 +42,6 @@ class Aspect:
         self.reprojection_error: Optional[Error] = None
         self.metadata: Dict[
             str, Any] = {} if metadata is None else metadata  # TODO: Is it worth making a data class for this? Will we always want tracker type named or is it optional?
-        
-        self._builder = TrajectoryBuilder(
-            tracked_point_names=anatomical_structure.tracked_point_names,
-            virtual_marker_definitions=anatomical_structure.virtual_markers_definitions,
-            segment_connections=anatomical_structure.segment_connections
-        )
 
     @classmethod
     def from_model_info(cls, name: str, model_info: ModelInfo, metadata: Optional[Dict[str, Any]] = None):
@@ -57,68 +54,40 @@ class Aspect:
         """
         anatomical_structure_dict = create_anatomical_structure_from_model_info(model_info=model_info)
         return cls(name=name, anatomical_structure=anatomical_structure_dict[name], metadata=metadata)
+    
+    def add_tracked_points(self, tracked_points:np.ndarray):
+        """Ingests tracked points data and adds it to the aspect as a trajectory"""
+        if self.anatomical_structure is None or self.anatomical_structure.tracked_point_names is None:
+            raise ValueError("Anatomical structure and tracked point names are required to ingest tracker data.")
+
+        builder = TrajectoryBuilder(
+            tracked_point_names=self.anatomical_structure.tracked_point_names,
+            virtual_marker_definitions= self.anatomical_structure.virtual_markers_definitions,
+            segment_connections= self.anatomical_structure.segment_connections
+        )
+
+        self.trajectories['3d_xyz'] = builder.build(
+            name='3d_xyz',
+            data_array=tracked_points
+        )
 
     def add_trajectory(self, 
-                       name: str,
-                       data: np.ndarray,
-                       tracked_point_names: List[MarkerName],
-                       virtual_marker_definitions: Dict[str, VirtualMarkerDefinition] | None = None,
-                       segment_connections: Dict[SegmentName, SegmentConnection] | None = None):
-        """Add a trajectory to the aspect"""
-        builder = TrajectoryBuilder(
-            tracked_point_names=tracked_point_names,
-            virtual_marker_definitions=virtual_marker_definitions,
-            segment_connections=segment_connections
-        )
-
-        self.trajectories[name] = builder.build(
-            name = name,
-            data_array=data
-        )
-        
+                       dict_of_trajectories: Dict[str, Trajectory]):
+        """ Adds all trajectories from a dictionary to the aspect."""
+        for name, trajectory in dict_of_trajectories.items():
+            if not isinstance(trajectory, Trajectory):
+                raise TypeError(f"Expected Trajectory instance for {name}, got {type(trajectory)}")
+            self.trajectories.update({name: trajectory})
+            
     def add_landmarks(self, landmarks_numpy_array: np.ndarray):
         """Adding all markers (virtual markers included) to model"""
         if self.anatomical_structure is None or self.anatomical_structure.tracked_point_names is None:
             raise ValueError("Anatomical structure and tracked point names are required to add landmark data")
         
-        
         self.add_trajectory(name='3d_xyz',
                             data=landmarks_numpy_array,
                             tracked_point_names =self.anatomical_structure.landmark_names,
                             segment_connections=self.anatomical_structure.segment_connections)
-        
-    def add_tracked_points(self, tracked_points: np.ndarray):
-        """Use tracked points to calculate trajectories, using virtual markers if included"""
-        if self.anatomical_structure is None or self.anatomical_structure.tracked_point_names is None:
-            raise ValueError("Anatomical structure and tracked point names are required to add tracked points.")
-        
-        self.add_trajectory(name = '3d_xyz',
-                            data = tracked_points,
-                            tracked_point_names = self.anatomical_structure.tracked_point_names,
-                            virtual_marker_definitions = self.anatomical_structure.virtual_markers_definitions,
-                            segment_connections = self.anatomical_structure.segment_connections)
-
-    def add_total_body_center_of_mass(self, total_body_center_of_mass: np.ndarray):
-
-        self.add_trajectory(name='total_body_com',
-                            data=total_body_center_of_mass,
-                            tracked_point_names=['total_body_com']
-                            )
-
-    def add_segment_center_of_mass(self, segment_center_of_mass: np.ndarray):
-        if self.anatomical_structure is None or self.anatomical_structure.center_of_mass_definitions is None:
-            raise ValueError(
-                "Anatomical structure and center of mass definitions are required to add segment center of mass.")
-        self.add_trajectory(name='segment_com',
-                            data=segment_center_of_mass,
-                            tracked_point_names=list(self.anatomical_structure.center_of_mass_definitions.keys()))
-        
-    def add_rigid_body_data(self, rigid_body_data: np.ndarray):
-        self.add_trajectory(name = "rigid_3d_xyz",
-                            data = rigid_body_data,
-                            tracked_point_names = self.anatomical_structure.marker_names,
-                            segment_connections = self.anatomical_structure.segment_connections
-                            )
 
     def add_reprojection_error(self, reprojection_error_data: np.ndarray):
         # TODO: This could be a feature of the trajectory as well, but I'm leaning towards aspect taking care of it
@@ -126,13 +95,13 @@ class Aspect:
             if reprojection_error_data.shape[0] != self.trajectories['3d_xyz'].num_frames:
                 raise ValueError(
                     "First dimension of reprojection error must match the number of frames in the trajectory.")
-            if reprojection_error_data.shape[1] != len(self.trajectories['3d_xyz'].tracked_point_names):
+            if reprojection_error_data.shape[1] != len(self.anatomical_structure.tracked_point_names):
                 raise ValueError(
                     "Second dimension of reprojection error must match the number of landmark names in the trajectory.")
 
         self.reprojection_error = Error(name='reprojection_error',
                                         data=reprojection_error_data,
-                                        marker_names=self.trajectories['3d_xyz'].tracked_point_names)
+                                        marker_names=self.anatomical_structure.tracked_point_names)
 
     def add_metadata(self, metadata: Dict[str, Any]):
         self.metadata.update(metadata)
