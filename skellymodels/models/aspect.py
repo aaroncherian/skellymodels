@@ -1,3 +1,5 @@
+from pydantic import BaseModel, Field, model_validator, ConfigDict
+
 from skellymodels.builders.anatomical_structure_builder import create_anatomical_structure_from_model_info
 from skellymodels.tracker_info.model_info import ModelInfo
 from skellymodels.builders.trajectory_builder import TrajectoryBuilder
@@ -16,34 +18,17 @@ class TrajectoryNames(Enum):
     TOTAL_BODY_COM = 'total_body_com'
     SEGMENT_COM = 'segment_com'
 
+class Aspect(BaseModel):
+    name: str
+    anatomical_structure: AnatomicalStructure
+    trajectories: dict[str,Trajectory] = Field(default_factory=dict)
+    reprojection_error: Optional[Error] = None
+    metadata: dict[str,Any] = Field(default_factory=dict)
 
-class Aspect:
-    """
-    An Aspect represents a distinct component of a tracked object (e.g., body, face, hand) containing 
-    the anatomical structure and 3D data for that tracked object. It handles structural definitions (through AnatomicalStructure), 
-    and using those definitions to turn 3d data into Trajectories.
-
-    Attributes:
-        name (str): Identifier for the aspect (e.g., "body", "face", "left_hand")
-        anatomical_structure (Optional[AnatomicalStructure]): Defines the structural properties like 
-            landmarks, virtual markers, segments, and center of mass definitions
-        trajectories (Dict[str, Trajectory]): Collection of named trajectory data sets
-        metadata (Dict[str, Any]): Additional information about the aspect
-    """
-
-    def __init__(self, name: str, 
-                 anatomical_structure: AnatomicalStructure,
-                 trajectories: Optional[Dict[str, Trajectory]] = None, 
-                 metadata: Optional[Dict[str, Any]] = None):
-        
-        self.name = name
-        self.anatomical_structure = anatomical_structure
-        self.trajectories: Dict[
-            str, Trajectory] = {} if trajectories is None else trajectories 
-        self.reprojection_error: Optional[Error] = None
-        self.metadata: Dict[
-            str, Any] = {} if metadata is None else metadata  # TODO: Is it worth making a data class for this? Will we always want tracker type named or is it optional?
-
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True, #to allow for numpy in the model
+        validate_assignment=True) #validates after the model is changed
+    
     @classmethod
     def from_model_info(cls, name: str, model_info: ModelInfo, metadata: Optional[Dict[str, Any]] = None):
         """ Class method to create an Aspect from a ModelInfo instance
@@ -142,3 +127,4 @@ class Aspect:
 
     def __repr__(self):
         return self.__str__()
+
