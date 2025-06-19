@@ -72,15 +72,15 @@ class Aspect:
                 raise TypeError(f"Expected Trajectory instance for {name}, got {type(trajectory)}")
             self.trajectories.update({name: trajectory})
             
-    def add_landmarks(self, landmarks_numpy_array: np.ndarray):
-        """Adding all markers (virtual markers included) to model"""
-        if self.anatomical_structure is None or self.anatomical_structure.tracked_point_names is None:
-            raise ValueError("Anatomical structure and tracked point names are required to add landmark data")
+    # def add_landmarks(self, landmarks_numpy_array: np.ndarray):
+    #     """Adding all markers (virtual markers included) to model"""
+    #     if self.anatomical_structure is None or self.anatomical_structure.tracked_point_names is None:
+    #         raise ValueError("Anatomical structure and tracked point names are required to add landmark data")
         
-        self.add_trajectory(name='3d_xyz',
-                            data=landmarks_numpy_array,
-                            tracked_point_names =self.anatomical_structure.landmark_names,
-                            segment_connections=self.anatomical_structure.segment_connections)
+    #     self.add_trajectory(name='3d_xyz',
+    #                         data=landmarks_numpy_array,
+    #                         tracked_point_names =self.anatomical_structure.landmark_names,
+    #                         segment_connections=self.anatomical_structure.segment_connections)
 
     def add_reprojection_error(self, reprojection_error_data: np.ndarray):
         # TODO: This could be a feature of the trajectory as well, but I'm leaning towards aspect taking care of it
@@ -99,6 +99,7 @@ class Aspect:
     def add_metadata(self, metadata: Dict[str, Any]):
         self.metadata.update(metadata)
 
+    @property
     def xyz(self) -> Optional[Trajectory]:
         """Returns the 3D XYZ trajectory if it exists, otherwise None."""
         return self.trajectories.get('3d_xyz')
@@ -117,7 +118,6 @@ class Aspect:
     def segment_com(self) -> Optional[Dict[SegmentName, Trajectory]]:
         """Returns the segment center of mass trajectory if it exists, otherwise None."""
         return self.trajectories.get('segment_com')
-
 
     def __str__(self):
         anatomical_info = (

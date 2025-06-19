@@ -1,7 +1,9 @@
 from enum import Enum
 import numpy as np
+import pandas as pd
 
 from skellymodels.models.aspect import Aspect
+from skellymodels.models.trajectory import Trajectory
 from skellymodels.managers.actor import Actor
 from skellymodels.tracker_info.model_info import ModelInfo
 class HumanAspectNames(Enum):
@@ -72,16 +74,16 @@ class Human(Actor):
         self.add_aspect(right_hand)
 
     @property
-    def body(self):
+    def body(self) -> Aspect:
         return self.aspects[HumanAspectNames.BODY.value]
     @property
-    def face(self):
+    def face(self) -> Aspect:
         return self.aspects.get(HumanAspectNames.FACE.value)
     @property
-    def left_hand(self):
+    def left_hand(self) -> Aspect:
         return self.aspects.get(HumanAspectNames.LEFT_HAND.value)
     @property
-    def right_hand(self):
+    def right_hand(self) -> Aspect:
         return self.aspects.get(HumanAspectNames.RIGHT_HAND.value)
     
     def add_tracked_points_numpy(self, tracked_points_numpy_array:np.ndarray):
@@ -106,7 +108,39 @@ class Human(Actor):
             self.right_hand.add_tracked_points(
                 tracked_points_numpy_array[:,self.tracked_point_slices[HumanAspectNames.RIGHT_HAND.value],:]
                 )
+
+
+    def sort_parquet_dataframe(self, dataframe:pd.DataFrame):
+        num_frames = len(list(dataframe['frame'].unique()))
         
+        model_names = list(dataframe['model'].unique())
+
+        for name in model_names:
+            tracker_name, aspect_name = name.split(".")
+
+            aspect_data_tidy = dataframe[dataframe['model'] == name]
+            trajectory_dict = {}
+            for trajectory_name in list(aspect_data_tidy['type'].unique()):
+                trajectory_data = aspect_data_tidy[aspect_data_tidy['type'] == trajectory_name]
+                num_markers = len(list(trajectory_data['keypoint'].unique()))
+                trajectory_data_wide = trajectory_data.pivot_table(index="frame", columns="keypoint", values=["x", "y", "z"], dropna = False)
+                trajectory_data_wide = trajectory_data_wide.swaplevel(axis=1)
+                trajectory_data_wide = trajectory_data_wide.sort_index(axis=1)
+                trajectory_array = trajectory_data_wide.to_numpy().reshape(num_frames,num_markers,3)
+                trajectory = Trajectory(
+                    name = tracker_name,
+                    array = trajectory_array,
+                    landmark_names=trajectory_data['keypoint'].unique()
+                )
+                trajectory_dict.update({trajectory_name:trajectory})
+                try:
+                    HumanAspectNames(aspect_name)
+                except ValueError:
+                    f"Aspect {aspect_name} not found in expected HumanAspectNames. Skipping."
+                    continue
+                
+            self.aspects.get(aspect_name).add_trajectory(trajectory_dict)
+
     def add_landmarks_numpy_array(self, landmarks_numpy_array:np.ndarray):
         """
         Takes in landmark data, splits and categorizes it based on the ranges determined by the ModelInfo,
