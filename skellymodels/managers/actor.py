@@ -50,9 +50,6 @@ class Actor(ABC):
     def __repr__(self):
         return self.__str__()
 
-    def add_aspect(self, aspect: Aspect):
-        self.aspects[aspect.name] = aspect
-
     @abstractmethod
     def add_tracked_points_numpy(self, tracked_points_numpy_array: np.ndarray):
         """
@@ -61,7 +58,6 @@ class Actor(ABC):
         """
         pass
     
- 
     @classmethod
     def from_tracked_points_numpy_array(cls, name: str, model_info: ModelInfo, tracked_points_numpy_array: np.ndarray):
         """
@@ -100,7 +96,18 @@ class Actor(ABC):
 
         actor.sort_parquet_dataframe(dataframe)
         return actor
-
+    
+    def add_aspect(self, aspect: Aspect):
+        self.aspects[aspect.name] = aspect
+        
+    def aspect_from_model_info(self, name:str) -> None:
+        aspect:Aspect = Aspect.from_model_info(
+            name = name,
+            model_info = self.model_info,
+            metadata = {"tracker_type": self.tracker}
+        )
+        self.add_aspect(aspect)
+        
     def calculate(self, pipeline:CalculationPipeline = STANDARD_PIPELINE):
         for aspect in self.aspects.values():
             results_logs = pipeline.run(aspect=aspect)
