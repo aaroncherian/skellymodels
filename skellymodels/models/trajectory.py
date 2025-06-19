@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from typing import Dict, List
 from skellymodels.utils.types import MarkerName, SegmentName, VirtualMarkerDefinition, SegmentConnection
+from skellymodels.models.anatomical_structure import AnatomicalStructure
 import warnings
 class Trajectory(BaseModel):
     name: str
@@ -10,6 +11,35 @@ class Trajectory(BaseModel):
     landmark_names: List[MarkerName]
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
+    @classmethod
+    def from_tracked_points_data(cls, 
+                                 name:str,
+                                tracked_points_array:np.ndarray, 
+                                anatomical_structure:AnatomicalStructure):
+        landmark_names = anatomical_structure.tracked_point_names.copy()
+        vm_defs = anatomical_structure.virtual_markers_definitions
+        
+        output_array_as_list: list[np.ndarray] = [tracked_points_array]
+        #compute virtual markers
+        if vm_defs:
+            for vm_name, vm_components in vm_defs.items():
+                component_names = vm_components["marker_names"]
+                component_weights = vm_components["marker_weights"]
+
+                component_indices = [anatomical_structure.tracked_point_names.index(name) for name in component_names]
+                component_data = tracked_points_array[:,component_indices,:]
+                component_weights = np.array(component_weights)[None, :, None]
+                weighted_marker_data = component_data * component_weights
+                virtual_marker = np.sum(weighted_marker_data, axis = 1)
+                output_array_as_list.append(virtual_marker[:, None, :])
+                landmark_names.append(vm_name) 
+
+        output_array = np.concatenate(output_array_as_list, axis=1) if len(output_array_as_list) > 1 else tracked_points_array
+    
+        return cls(name = name, 
+                   array = output_array,
+                   landmark_names = landmark_names)
+    
     @model_validator(mode="after")
     def _check_shape(self):
         if self.array.shape[1] != len(self.landmark_names):

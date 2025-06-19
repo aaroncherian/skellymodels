@@ -46,15 +46,10 @@ class Aspect(BaseModel):
         if self.anatomical_structure is None or self.anatomical_structure.tracked_point_names is None:
             raise ValueError("Anatomical structure and tracked point names are required to ingest tracker data.")
 
-        builder = TrajectoryBuilder(
-            tracked_point_names=self.anatomical_structure.tracked_point_names,
-            virtual_marker_definitions= self.anatomical_structure.virtual_markers_definitions,
-            segment_connections= self.anatomical_structure.segment_connections
-        )
-
-        self.trajectories[TrajectoryNames.XYZ.value] = builder.build(
-            name=TrajectoryNames.XYZ.value,
-            data_array=tracked_points
+        self.trajectories[TrajectoryNames.XYZ.value] = Trajectory.from_tracked_points_data(
+            name = TrajectoryNames.XYZ.value,
+            tracked_points_array=tracked_points,
+            anatomical_structure=self.anatomical_structure
         )
 
     def add_trajectory(self, 
