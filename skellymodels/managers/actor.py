@@ -30,30 +30,28 @@ class Actor(ABC):
         self.model_info = model_info
 
     def __getitem__(self, key: str):
+        """
+        Use to access aspects directly (i.e. actor['body'] instead of actor.aspect['body'])
+        """
         return self.aspects[key]
 
-    def __str__(self):
-        return str(self.aspects.keys())
+    def __str__(self) -> str:
+        lines = [f"Actor with name:{self.name!r} and tracker:{self.model_info.name!r}"]
+
+        for asp_name, asp in self.aspects.items():
+            traj_names = ", ".join(t.name for t in asp.trajectories.values()) or "∅"
+            lines.append(f"  • {asp_name:<10}  trajectories: {traj_names}")
+
+        if not self.aspects:
+            lines.append("  (no aspects)")
+
+        return "\n".join(lines)
+
+    def __repr__(self):
+        return self.__str__()
 
     def add_aspect(self, aspect: Aspect):
         self.aspects[aspect.name] = aspect
-
-    def get_data(self, aspect_name: str, type: str):
-        return self.aspects[aspect_name].trajectories[type].data
-
-    def get_marker_data(self, aspect_name: str, type: str, marker_name: str):
-        return self.aspects[aspect_name].trajectories[type].get_marker(marker_name)
-
-    def get_frame(self, aspect_name: str, type: str, frame_number: int):
-        return self.aspects[aspect_name].trajectories[type].get_frame(frame_number)
-
-    def get_error_marker(self, aspect_name: str, marker_name: str):
-        return self.aspects[aspect_name].reprojection_error.get_marker(marker_name) if self.aspects[
-            aspect_name].reprojection_error else None
-
-    def get_error_frame(self, aspect_name: str, frame_number: int):
-        return self.aspects[aspect_name].reprojection_error.get_frame(frame_number) if self.aspects[
-            aspect_name].reprojection_error else None
 
     @abstractmethod
     def add_tracked_points_numpy(self, tracked_points_numpy_array: np.ndarray):

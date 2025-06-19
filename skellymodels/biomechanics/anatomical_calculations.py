@@ -1,5 +1,4 @@
-from abc import ABC, abstractmethod
-from skellymodels.models.aspect import Aspect
+from skellymodels.models.aspect import Aspect, TrajectoryNames
 from skellymodels.models.trajectory import Trajectory
 
 from skellymodels.biomechanics.calculations.calculate_center_of_mass import calculate_center_of_mass
@@ -16,7 +15,7 @@ class CenterOfMassCalculation(AnatomicalCalculation):
                 messages=[f'No COM definitions for aspect: {aspect.name}, skipping COM calculation']
             )
 
-        trajectory = aspect.trajectories['3d_xyz'] #NOTE: maybe put this in a try/except loop where the except also returns a CalcResult? with success=False
+        trajectory = aspect.xyz #NOTE: maybe put this in a try/except loop where the except also returns a CalcResult? with success=False
 
         total_body_com, segment_com = calculate_center_of_mass(
             segment_positions=trajectory.segment_data(aspect.anatomical_structure.segment_connections),
@@ -27,8 +26,8 @@ class CenterOfMassCalculation(AnatomicalCalculation):
         return CalculationResult(
             success = True,
             data = {
-                'total_body_com': total_body_com,
-                'segment_com': segment_com
+                TrajectoryNames.TOTAL_BODY_COM.value: total_body_com,
+                TrajectoryNames.SEGMENT_COM.value: segment_com
             },
             messages=[f'Successfully calculated COM for aspect: {aspect.name}'] 
         )
@@ -38,20 +37,20 @@ class CenterOfMassCalculation(AnatomicalCalculation):
             return
         
         tb_com_trajectory = Trajectory(
-            name='total_body_com',
-            array=results.data['total_body_com'],
-            landmark_names =['total_body_com'],
+            name=TrajectoryNames.TOTAL_BODY_COM.value,
+            array=results.data[TrajectoryNames.TOTAL_BODY_COM.value],
+            landmark_names =[TrajectoryNames.TOTAL_BODY_COM.value],
         )
 
         segment_com_trajectory = Trajectory(
-            name='segment_com',
-            array=results.data['segment_com'],
+            name=TrajectoryNames.SEGMENT_COM.value,
+            array=results.data[TrajectoryNames.SEGMENT_COM.value],
             landmark_names=list(aspect.anatomical_structure.center_of_mass_definitions.keys()),
         )
 
         aspect.add_trajectory(
-            {'total_body_com': tb_com_trajectory,
-            'segment_com': segment_com_trajectory}
+            {TrajectoryNames.TOTAL_BODY_COM.value: tb_com_trajectory,
+            TrajectoryNames.SEGMENT_COM.value: segment_com_trajectory}
         )
 
 class RigidBonesEnforcement(AnatomicalCalculation):
@@ -65,7 +64,7 @@ class RigidBonesEnforcement(AnatomicalCalculation):
 
         print('Enforcing rigid bones for aspect:', aspect.name)
         
-        trajectory = aspect.trajectories['3d_xyz']
+        trajectory = aspect.xyz
 
         rigid_marker_data = enforce_rigid_bones(
             marker_trajectories=trajectory.as_dict,
@@ -74,7 +73,7 @@ class RigidBonesEnforcement(AnatomicalCalculation):
 
         return CalculationResult(
             success=True,
-            data = {'rigid_bones': rigid_marker_data},
+            data = {TrajectoryNames.RIGID_XYZ.value: rigid_marker_data},
             messages= [f'Successfully enforced rigid bones for aspect: {aspect.name}']
         )
 
@@ -83,9 +82,9 @@ class RigidBonesEnforcement(AnatomicalCalculation):
             return
         
         aspect.add_trajectory(
-            {'rigid_3d_xyz' : Trajectory(
-            name='rigid_3d_xyz',
-            array=results.data['rigid_bones'],
+            {TrajectoryNames.RIGID_XYZ.value : Trajectory(
+            name=TrajectoryNames.RIGID_XYZ.value,
+            array=results.data[TrajectoryNames.RIGID_XYZ.value],
             landmark_names=aspect.anatomical_structure.landmark_names,
             segment_connections=aspect.anatomical_structure.segment_connections
         )})

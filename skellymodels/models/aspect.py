@@ -7,6 +7,14 @@ from skellymodels.models.trajectory import Trajectory
 from skellymodels.utils.types import  SegmentName
 from typing import Dict, Any, Optional
 import numpy as np
+from enum import Enum
+
+class TrajectoryNames(Enum):
+    """Enum for common trajectory names used in aspects."""
+    XYZ = '3d_xyz'
+    RIGID_XYZ = 'rigid_3d_xyz'
+    TOTAL_BODY_COM = 'total_body_com'
+    SEGMENT_COM = 'segment_com'
 
 
 class Aspect:
@@ -59,8 +67,8 @@ class Aspect:
             segment_connections= self.anatomical_structure.segment_connections
         )
 
-        self.trajectories['3d_xyz'] = builder.build(
-            name='3d_xyz',
+        self.trajectories[TrajectoryNames.XYZ.value] = builder.build(
+            name=TrajectoryNames.XYZ.value,
             data_array=tracked_points
         )
 
@@ -75,8 +83,8 @@ class Aspect:
 
     def add_reprojection_error(self, reprojection_error_data: np.ndarray):
         # TODO: This could be a feature of the trajectory as well, but I'm leaning towards aspect taking care of it
-        if self.trajectories.get('3d_xyz') is not None:
-            if reprojection_error_data.shape[0] != self.trajectories['3d_xyz'].num_frames:
+        if self.trajectories.get(TrajectoryNames.XYZ.value) is not None:
+            if reprojection_error_data.shape[0] != self.trajectories[TrajectoryNames.XYZ.value].num_frames:
                 raise ValueError(
                     "First dimension of reprojection error must match the number of frames in the trajectory.")
             if reprojection_error_data.shape[1] != len(self.anatomical_structure.tracked_point_names):
@@ -93,22 +101,22 @@ class Aspect:
     @property
     def xyz(self) -> Optional[Trajectory]:
         """Returns the 3D XYZ trajectory if it exists, otherwise None."""
-        return self.trajectories.get('3d_xyz')
+        return self.trajectories.get(TrajectoryNames.XYZ.value)
     
     @property
     def rigid_xyz(self) -> Optional[Trajectory]:
         """Returns the rigid body 3D XYZ trajectory if it exists, otherwise None."""
-        return self.trajectories.get('rigid_3d_xyz')
+        return self.trajectories.get(TrajectoryNames.RIGID_XYZ.value)
 
     @property
     def total_body_com(self) -> Optional[Trajectory]:
         """Returns the total body center of mass trajectory if it exists, otherwise None."""
-        return self.trajectories.get('total_body_com')
+        return self.trajectories.get(TrajectoryNames.TOTAL_BODY_COM.value)
     
     @property
     def segment_com(self) -> Optional[Dict[SegmentName, Trajectory]]:
         """Returns the segment center of mass trajectory if it exists, otherwise None."""
-        return self.trajectories.get('segment_com')
+        return self.trajectories.get(TrajectoryNames.SEGMENT_COM.value)
 
     def __str__(self):
         anatomical_info = (

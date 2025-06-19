@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 
 from skellymodels.models.aspect import Aspect
-from skellymodels.models.trajectory import Trajectory
 from skellymodels.managers.actor import Actor
 from skellymodels.tracker_info.model_info import ModelInfo
 class HumanAspectNames(Enum):

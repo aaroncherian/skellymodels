@@ -17,10 +17,10 @@ human:Human = Human(
             name="human_one", 
             model_info=model_info
             )
-# human.add_tracked_points_numpy(tracked_points_numpy_array=data)
+human.add_tracked_points_numpy(tracked_points_numpy_array=data)
 
-human:Human = Human.from_data(path_to_data_folder= Path.cwd(),
-                                    model_info=model_info)
+# human:Human = Human.from_data(path_to_data_folder= Path.cwd(),
+#                                     model_info=model_info)
 
 
 pprint([human.aspects])
