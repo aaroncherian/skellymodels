@@ -4,15 +4,8 @@ from skellymodels.builders.trajectory_builder import TrajectoryBuilder
 from skellymodels.models.anatomical_structure import AnatomicalStructure
 from skellymodels.models.error import Error
 from skellymodels.models.trajectory import Trajectory
-from skellymodels.utils.types import MarkerName, SegmentName, VirtualMarkerDefinition, SegmentConnection
-
-
-# from skellymodels.biomechanics.biomechanics_wrappers import (
-#     calculate_center_of_mass,
-#     enforce_rigid_bones_from_trajectory,
-# )
-
-from typing import Dict, Any, List, Optional
+from skellymodels.utils.types import  SegmentName
+from typing import Dict, Any, Optional
 import numpy as np
 
 
@@ -38,7 +31,7 @@ class Aspect:
         self.name = name
         self.anatomical_structure = anatomical_structure
         self.trajectories: Dict[
-            str, Trajectory] = {} if trajectories is None else trajectories  # TODO: the string keys make this clunky to use. If we "expect" to have 3d_xyz, total_body_com, and segment_com, could use an Enum
+            str, Trajectory] = {} if trajectories is None else trajectories 
         self.reprojection_error: Optional[Error] = None
         self.metadata: Dict[
             str, Any] = {} if metadata is None else metadata  # TODO: Is it worth making a data class for this? Will we always want tracker type named or is it optional?
@@ -106,9 +99,25 @@ class Aspect:
     def add_metadata(self, metadata: Dict[str, Any]):
         self.metadata.update(metadata)
 
-    def add_tracker_type(self, tracker_type: str):
-        # TODO: Same with anatomical structure, are we ever adding this after initialization?
-        self.add_metadata({"tracker_type": tracker_type})
+    def xyz(self) -> Optional[Trajectory]:
+        """Returns the 3D XYZ trajectory if it exists, otherwise None."""
+        return self.trajectories.get('3d_xyz')
+    
+    @property
+    def rigid_xyz(self) -> Optional[Trajectory]:
+        """Returns the rigid body 3D XYZ trajectory if it exists, otherwise None."""
+        return self.trajectories.get('rigid_3d_xyz')
+
+    @property
+    def total_body_com(self) -> Optional[Trajectory]:
+        """Returns the total body center of mass trajectory if it exists, otherwise None."""
+        return self.trajectories.get('total_body_com')
+    
+    @property
+    def segment_com(self) -> Optional[Dict[SegmentName, Trajectory]]:
+        """Returns the segment center of mass trajectory if it exists, otherwise None."""
+        return self.trajectories.get('segment_com')
+
 
     def __str__(self):
         anatomical_info = (
