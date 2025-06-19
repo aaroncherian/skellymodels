@@ -72,16 +72,6 @@ class Aspect:
                 raise TypeError(f"Expected Trajectory instance for {name}, got {type(trajectory)}")
             self.trajectories.update({name: trajectory})
             #add check for whether the trajectory name is in the expected list (and make an expected enum list)
-            
-    # def add_landmarks(self, landmarks_numpy_array: np.ndarray):
-    #     """Adding all markers (virtual markers included) to model"""
-    #     if self.anatomical_structure is None or self.anatomical_structure.tracked_point_names is None:
-    #         raise ValueError("Anatomical structure and tracked point names are required to add landmark data")
-        
-    #     self.add_trajectory(name='3d_xyz',
-    #                         data=landmarks_numpy_array,
-    #                         tracked_point_names =self.anatomical_structure.landmark_names,
-    #                         segment_connections=self.anatomical_structure.segment_connections)
 
     def add_reprojection_error(self, reprojection_error_data: np.ndarray):
         # TODO: This could be a feature of the trajectory as well, but I'm leaning towards aspect taking care of it
