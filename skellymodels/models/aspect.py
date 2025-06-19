@@ -40,17 +40,6 @@ class Aspect(BaseModel):
         """
         anatomical_structure_dict = create_anatomical_structure_from_model_info(model_info=model_info)
         return cls(name=name, anatomical_structure=anatomical_structure_dict[name], metadata=metadata)
-    
-    def add_tracked_points(self, tracked_points:np.ndarray):
-        """Ingests tracked points data and adds it to the aspect as a trajectory"""
-        if self.anatomical_structure is None or self.anatomical_structure.tracked_point_names is None:
-            raise ValueError("Anatomical structure and tracked point names are required to ingest tracker data.")
-
-        self.trajectories[TrajectoryNames.XYZ.value] = Trajectory.from_tracked_points_data(
-            name = TrajectoryNames.XYZ.value,
-            tracked_points_array=tracked_points,
-            anatomical_structure=self.anatomical_structure
-        )
 
     def add_trajectory(self, 
                        dict_of_trajectories: Dict[str, Trajectory]):
@@ -60,6 +49,20 @@ class Aspect(BaseModel):
                 raise TypeError(f"Expected Trajectory instance for {name}, got {type(trajectory)}")
             self.trajectories.update({name: trajectory})
             #add check for whether the trajectory name is in the expected list (and make an expected enum list)
+
+    def add_tracked_points(self, tracked_points:np.ndarray):
+        """Ingests tracked points data and adds it to the aspect as a trajectory"""
+
+        if self.anatomical_structure is None:
+            raise ValueError("Anatomical structure and tracked point names are required to ingest tracker data.")
+
+        trajectory = Trajectory.from_tracked_points_data(
+            name = TrajectoryNames.XYZ.value,
+            tracked_points_array=tracked_points,
+            anatomical_structure=self.anatomical_structure
+        )
+
+        self.add_trajectory({TrajectoryNames.XYZ.value: trajectory})
 
     def add_reprojection_error(self, reprojection_error_data: np.ndarray):
         # TODO: This could be a feature of the trajectory as well, but I'm leaning towards aspect taking care of it
