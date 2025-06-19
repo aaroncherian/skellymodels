@@ -64,7 +64,7 @@ class Trajectory(BaseModel):
         return segment_positions
     
     @property
-    def data(self):
+    def data(self): #this is for me to figure out where I use this in my validation pipeline. Will remove this after that.
         warnings.warn(".data is deprecated - use .as_dict for the same output",
                       DeprecationWarning,
                       stacklevel=2)  # TODO: elsewhere this is used for the numpy array, but here its a dictionary 
