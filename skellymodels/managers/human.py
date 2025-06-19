@@ -15,14 +15,8 @@ class HumanAspectNames(Enum):
 
 class Human(Actor):
     def __init__(self, name: str, model_info:ModelInfo):
-        super().__init__(name)
-        
-        self.tracker = model_info.name
-        self.aspect_order = model_info.order
-        self.tracked_point_slices = model_info.tracked_point_slices
-        self.landmark_slices = model_info.landmark_slices
-        self.model_info = model_info
-        
+        super().__init__(name, model_info)
+    
         self._initialize_aspects()
 
     def _initialize_aspects(self):
@@ -125,10 +119,11 @@ class Human(Actor):
                 num_markers = len(list(trajectory_data['keypoint'].unique()))
                 marker_order = list(trajectory_data['keypoint'].drop_duplicates())
                 
-                trajectory_data_wide = trajectory_data.pivot_table(index="frame", columns="keypoint", values=["x", "y", "z"], dropna = False)
-                trajectory_data_wide = trajectory_data_wide.swaplevel(axis=1)
-                trajectory_data_wide = trajectory_data_wide.sort_index(axis=1)
-                trajectory_data_wide = trajectory_data_wide.reindex(columns = marker_order, level = 0)
+                trajectory_data_wide = (trajectory_data
+                                        .pivot_table(index="frame", columns="keypoint", values=["x", "y", "z"], dropna = False)
+                                        .swaplevel(axis=1)
+                                        .sort_index(axis=1)
+                                        .reindex(columns = marker_order, level = 0))
                 trajectory_array = trajectory_data_wide.to_numpy().reshape(num_frames,num_markers,3)
                 trajectory = Trajectory(
                     name = trajectory_name,

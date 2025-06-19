@@ -22,6 +22,11 @@ class Actor(ABC):
         ModelInfo] = None, **kwargs):
         self.name = name
         self.aspects: Dict[str, Aspect] = {}
+        self.tracker = model_info.name #the day we allow for separate pose estimation for different things (body/hands/face), we (I) may regret this
+        self.aspect_order = model_info.order
+        self.tracked_point_slices = model_info.tracked_point_slices
+        self.landmark_slices = model_info.landmark_slices
+        self.model_info = model_info
 
     def __getitem__(self, key: str):
         return self.aspects[key]
@@ -94,7 +99,7 @@ class Actor(ABC):
 
         dataframe = pd.read_parquet(parquet_file)
         
-        actor = cls(name =dataframe.attrs['metadata'],
+        actor = cls(name =dataframe.attrs['metadata']['name'],
                     model_info = model_info)
 
         actor.sort_parquet_dataframe(dataframe)
@@ -181,6 +186,7 @@ class Actor(ABC):
             'created_at': datetime.datetime.now().isoformat(),
             'created_with': 'skelly_models',
             'name': self.name,
+            'aspects': list(self.aspect_order)
         }
         save_path = path_to_output_folder / FREEMOCAP_PARQUET_NAME
         dataframe.to_parquet(save_path)
