@@ -103,29 +103,6 @@ class Human(Actor):
                 tracked_points_numpy_array[:,self.tracked_point_slices[HumanAspectNames.RIGHT_HAND.value],:]
                 )
 
-
-    def add_landmarks_numpy_array(self, landmarks_numpy_array:np.ndarray):
-        """
-        Takes in landmark data, splits and categorizes it based on the ranges determined by the ModelInfo,
-        and adds it as a tracked point Trajectory to the body, and optionally face/hands aspects 
-        """
-        self.body.add_landmarks(landmarks_numpy_array[:,self.landmark_slices[HumanAspectNames.BODY.value],:])
-
-        if HumanAspectNames.FACE.value in self.landmark_slices and self.face is not None:
-            self.face.add_landmarks(
-                landmarks_numpy_array[:,self.landmark_slices[HumanAspectNames.FACE.value],:]
-                )
-        
-        if HumanAspectNames.LEFT_HAND.value in self.landmark_slices and self.left_hand is not None:
-            self.left_hand.add_landmarks(
-                landmarks_numpy_array[:,self.landmark_slices[HumanAspectNames.LEFT_HAND.value],:]
-                )
-
-        if HumanAspectNames.RIGHT_HAND.value in self.landmark_slices and self.right_hand is not None:
-            self.right_hand.add_landmarks(
-                landmarks_numpy_array[:,self.landmark_slices[HumanAspectNames.RIGHT_HAND.value],:]
-                )
-
     def add_reprojection_error_numpy(self, reprojection_error_data: np.ndarray):
         self.body.add_reprojection_error(reprojection_error_data[:, self.tracked_point_slices[HumanAspectNames.BODY.value]])
 

@@ -62,14 +62,6 @@ class Actor(ABC):
         and adds it as a tracked point Trajectory to the body, and optionally face/hands aspects 
         """
         pass
-
-    @abstractmethod
-    def add_landmarks_numpy_array(self, landmarks_numpy_array:np.ndarray):
-        """
-        Takes in the landmarks data (meaning virtual markers already calculated), splits and categorizes it based on the ranges determined by the ModelInfo,
-        and adds it as a tracked point Trajectory to the body, and optionally face/hands aspects 
-        """
-        pass
     
  
     @classmethod
@@ -80,13 +72,6 @@ class Actor(ABC):
         actor = cls(name=name, model_info=model_info)
         actor.add_tracked_points_numpy(tracked_points_numpy_array=tracked_points_numpy_array)
         return actor
-    
-    @classmethod
-    def from_landmarks_numpy_array(cls, name:str, model_info:ModelInfo, landmarks_numpy_array:np.ndarray):
-        actor = cls(name=name, model_info = model_info)
-        actor.add_landmarks_numpy_array(landmarks_numpy_array=landmarks_numpy_array)
-        return actor
-
     
     @classmethod
     def from_data(cls, model_info: ModelInfo, path_to_data_folder: Path|str):
@@ -117,8 +102,6 @@ class Actor(ABC):
 
         actor.sort_parquet_dataframe(dataframe)
         return actor
-
-
 
     def calculate(self, pipeline:CalculationPipeline = STANDARD_PIPELINE):
         for aspect in self.aspects.values():
