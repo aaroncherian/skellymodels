@@ -19,7 +19,7 @@ human:Human = Human(
             )
 # human.add_tracked_points_numpy(tracked_points_numpy_array=data)
 
-human:Human = Human.from_saved_data(path_to_data_folder= Path.cwd(),
+human:Human = Human.from_data(path_to_data_folder= Path.cwd(),
                                     model_info=model_info)
 
 
