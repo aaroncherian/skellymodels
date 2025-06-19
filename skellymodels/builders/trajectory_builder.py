@@ -56,6 +56,5 @@ class TrajectoryBuilder:
             array = output_array,
             name = name,
             landmark_names = landmark_names,
-            virtual_marker_definitions= self.virtual_marker_definitions,
             segment_connections = self.segment_connections,
     )

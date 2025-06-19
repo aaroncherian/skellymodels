@@ -19,8 +19,7 @@ class Actor(ABC):
     The Actor class is a container for multiple Aspects of a single person/creature/object that we track in 3D.
     """
 
-    def __init__(self, name: str, model_info: Optional[
-        ModelInfo] = None, **kwargs):
+    def __init__(self, name: str, model_info: ModelInfo, **kwargs):
         self.name = name
         self.aspects: Dict[str, Aspect] = {}
         self.tracker = model_info.name #the day we allow for separate pose estimation for different things (body/hands/face), we (I) may regret this
@@ -107,7 +106,7 @@ class Actor(ABC):
             metadata = {"tracker_type": self.tracker}
         )
         self.add_aspect(aspect)
-        
+
     def calculate(self, pipeline:CalculationPipeline = STANDARD_PIPELINE):
         for aspect in self.aspects.values():
             results_logs = pipeline.run(aspect=aspect)
@@ -158,7 +157,7 @@ class Actor(ABC):
             for trajectory in aspect.trajectories.values():
                 save_path = path_to_output_folder / f"{aspect.metadata['tracker_type']}_{aspect.name}_{trajectory.name}.npy"
                 np.save(save_path,
-                        trajectory.as_array)  # TODO: the .data is throwing a type error because this is sometimes a dict instead of an array
+                        trajectory.as_array) 
                 print(f"Saved out {save_path}")
 
     def save_out_csv_data(self, path_to_output_folder: Optional[Path] = None):
