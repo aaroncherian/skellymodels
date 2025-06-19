@@ -29,3 +29,10 @@ class Board(Actor):
         self.board.add_tracked_points(
             tracked_points_numpy_array[:, self.tracked_point_slices[BoardAspectEnum.BOARD.value],:]
         )
+
+    @classmethod
+    def from_board_dimensions(rows:int, columns:int):
+        """
+        potential example of how we could build a board from the input dimensions (will return to this later)
+        """
+        pass
