@@ -118,25 +118,24 @@ class Actor(ABC):
         for aspect_name, aspect in self.aspects.items():
             for trajectory_name, trajectory in aspect.trajectories.items():
 
-                if not trajectory_name == 'rigid_3d_xyz': #NOTE: 03/04/25 - excluding rigid body trajectories for the moment because I think they'll be handled different enough in the final version that its not worth including at the moment
-                     # Convert trajectory to a DataFrame
-                    trajectory_df = trajectory.as_dataframe
-                    
-                    # Add metadata columns
-                    trajectory_df['model'] = f"{aspect.metadata['tracker_type']}.{aspect_name}"
-                    trajectory_df['type'] = trajectory_name  # Store the trajectory type
+                # Convert trajectory to a DataFrame
+                trajectory_df = trajectory.as_dataframe
+                
+                # Add metadata columns
+                trajectory_df['model'] = f"{aspect.metadata['tracker_type']}.{aspect_name}"
+                trajectory_df['type'] = trajectory_name  # Store the trajectory type
 
-                    # Add error column
-                    if aspect.reprojection_error is None:
-                        trajectory_df['reprojection_error'] = np.nan
-                    else:
-                        trajectory_df['reprojection_error'] = trajectory_df.apply(
-                            lambda row: aspect.reprojection_error.get_frame(frame_number=row['frame']).get(row['keypoint'], np.nan),
-                            axis=1
-                        )  
+                # Add error column
+                if aspect.reprojection_error is None:
+                    trajectory_df['reprojection_error'] = np.nan
+                else:
+                    trajectory_df['reprojection_error'] = trajectory_df.apply(
+                        lambda row: aspect.reprojection_error.get_frame(frame_number=row['frame']).get(row['keypoint'], np.nan),
+                        axis=1
+                    )  
 
-                    # Append DataFrame to the list
-                    all_data.append(trajectory_df)
+                # Append DataFrame to the list
+                all_data.append(trajectory_df)
 
         # Combine all DataFrames into one
         big_df = pd.concat(all_data, ignore_index=True)
