@@ -8,8 +8,6 @@ class Trajectory(BaseModel):
     name: str
     array: np.ndarray
     landmark_names: List[MarkerName]
-    virtual_marker_definitions: Dict[str, VirtualMarkerDefinition] | None = None
-    segment_connections: Dict[SegmentName, SegmentConnection] | None = None
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     @model_validator(mode="after")
@@ -52,13 +50,12 @@ class Trajectory(BaseModel):
     def num_markers(self) -> int:
         return self.array.shape[1]
     
-    @property
-    def segment_data(self) -> Dict[str, Dict[str, np.ndarray]]:
-        if not self.segment_connections:
+    def segment_data(self, segment_connections:Dict[SegmentName, SegmentConnection]) -> Dict[SegmentName, Dict[str, np.ndarray]]:
+        if not segment_connections:
             return {}
         d = self.as_dict
         segment_positions = {}
-        for name, connection in self.segment_connections.items():
+        for name, connection in segment_connections.items():
             proximal = d.get(connection["proximal"])
             distal = d.get(connection["distal"])
 

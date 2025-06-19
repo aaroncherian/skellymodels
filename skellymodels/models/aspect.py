@@ -71,6 +71,7 @@ class Aspect:
             if not isinstance(trajectory, Trajectory):
                 raise TypeError(f"Expected Trajectory instance for {name}, got {type(trajectory)}")
             self.trajectories.update({name: trajectory})
+            #add check for whether the trajectory name is in the expected list (and make an expected enum list)
             
     # def add_landmarks(self, landmarks_numpy_array: np.ndarray):
     #     """Adding all markers (virtual markers included) to model"""

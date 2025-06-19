@@ -123,12 +123,15 @@ class Human(Actor):
             for trajectory_name in list(aspect_data_tidy['type'].unique()):
                 trajectory_data = aspect_data_tidy[aspect_data_tidy['type'] == trajectory_name]
                 num_markers = len(list(trajectory_data['keypoint'].unique()))
+                marker_order = list(trajectory_data['keypoint'].drop_duplicates())
+                
                 trajectory_data_wide = trajectory_data.pivot_table(index="frame", columns="keypoint", values=["x", "y", "z"], dropna = False)
                 trajectory_data_wide = trajectory_data_wide.swaplevel(axis=1)
                 trajectory_data_wide = trajectory_data_wide.sort_index(axis=1)
+                trajectory_data_wide = trajectory_data_wide.reindex(columns = marker_order, level = 0)
                 trajectory_array = trajectory_data_wide.to_numpy().reshape(num_frames,num_markers,3)
                 trajectory = Trajectory(
-                    name = tracker_name,
+                    name = trajectory_name,
                     array = trajectory_array,
                     landmark_names=trajectory_data['keypoint'].unique()
                 )
@@ -140,6 +143,7 @@ class Human(Actor):
                     continue
                 
             self.aspects.get(aspect_name).add_trajectory(trajectory_dict)
+            f = 2
 
     def add_landmarks_numpy_array(self, landmarks_numpy_array:np.ndarray):
         """

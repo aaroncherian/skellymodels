@@ -19,7 +19,7 @@ class CenterOfMassCalculation(AnatomicalCalculation):
         trajectory = aspect.trajectories['3d_xyz'] #NOTE: maybe put this in a try/except loop where the except also returns a CalcResult? with success=False
 
         total_body_com, segment_com = calculate_center_of_mass(
-            segment_positions=trajectory.segment_data,
+            segment_positions=trajectory.segment_data(aspect.anatomical_structure.segment_connections),
             center_of_mass_definitions=aspect.anatomical_structure.center_of_mass_definitions,
             num_frames=trajectory.num_frames
         )

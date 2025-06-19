@@ -98,36 +98,8 @@ class Actor(ABC):
                     model_info = model_info)
 
         actor.sort_parquet_dataframe(dataframe)
-        # num_frames = len(list(dataframe['frame'].unique()))
-
-        
-        # model_names = list(dataframe['model'].unique())
-
-        # for name in model_names:
-        #     tracker_name, aspect_name = name.split(".")
-
-        #     aspect_data_tidy = dataframe[dataframe['model'] == name]
-            
-        #     for trajectory in list(aspect_data_tidy['type'].unique()):
-        #         trajectory_data = aspect_data_tidy[aspect_data_tidy['type'] == trajectory]
-        #         num_markers = len(list(trajectory_data['keypoint'].unique()))
-        #         trajectory_data_wide = trajectory_data.pivot_table(index="frame", columns="keypoint", values=["x", "y", "z"], dropna = False)
-        #         trajectory_data_wide = trajectory_data_wide.swaplevel(axis=1)
-        #         trajectory_data_wide = trajectory_data_wide.sort_index(axis=1)
-        #         trajectory_array = trajectory_data_wide.to_numpy().reshape(num_frames,num_markers,3).shape
-        #         f = 2
-            
-            
-
-        #     aspect_data_wide = aspect_data_tidy.pivot_table(index="frame", columns="keypoint", values=["x", "y", "z"], dropna = False)
-        #     aspect_data_wide = aspect_data_wide.swaplevel(axis=1)
-        #     aspect_data_wide = aspect_data_wide.sort_index(axis=1)
-        #     tracker_name, aspect_name = name.split(".")
-
-        #     num_frames = len(aspect_data_wide)
-        #     num_markers = len()
-        # f = 2
-
+        return actor
+      
     def calculate(self, pipeline:CalculationPipeline = STANDARD_PIPELINE):
         for aspect in self.aspects.values():
             results_logs = pipeline.run(aspect=aspect)
