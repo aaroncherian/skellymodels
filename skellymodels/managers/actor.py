@@ -186,7 +186,7 @@ class Actor(ABC):
         }
         save_path = path_to_output_folder / FREEMOCAP_PARQUET_NAME
         dataframe.to_parquet(save_path)
-        print(f"Data successfully saved to f{save_path}")
+        print(f"Data successfully saved to {save_path}")
 
     def sort_parquet_dataframe(self, dataframe:pd.DataFrame):
         num_frames = dataframe['frame'].nunique()
