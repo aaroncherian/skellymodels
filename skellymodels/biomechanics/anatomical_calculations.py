@@ -7,6 +7,17 @@ from skellymodels.biomechanics.models.anatomical_calculation import AnatomicalCa
 
 
 class CenterOfMassCalculation(AnatomicalCalculation):
+    """
+    Calculates segment-level and total-body center of mass trajectories.
+
+    Requires the aspect's AnatomicalStructure to define:
+    - segment_connections
+    - center_of_mass_definitions
+
+    Adds two new trajectories to the aspect:
+    - 'total_body_com' (Trajectory with a single virtual marker)
+    - 'segment_com' (Trajectory with one marker per segment)
+    """
     def calculate(self, aspect:Aspect) -> CalculationResult:
         if not aspect.anatomical_structure.center_of_mass_definitions:
             return CalculationResult(
@@ -54,6 +65,15 @@ class CenterOfMassCalculation(AnatomicalCalculation):
         )
 
 class RigidBonesEnforcement(AnatomicalCalculation):
+    """
+    Enforces rigid bone constraints using a joint hierarchy.
+
+    Requires the aspect's AnatomicalStructure to define:
+    - joint_hierarchy
+
+    Adds one new trajectory to the aspect:
+    - 'rigid_3d_xyz' (rigidified marker trajectories)
+    """
     def calculate(self, aspect:Aspect) -> CalculationResult:
         if not aspect.anatomical_structure.joint_hierarchy:
             return CalculationResult(
@@ -61,8 +81,6 @@ class RigidBonesEnforcement(AnatomicalCalculation):
                 data = {},
                 messages = [f'No joint hierarchy defined for aspect: {aspect.name}, skipping rigid bones enforcement']
             )
-
-        print('Enforcing rigid bones for aspect:', aspect.name)
         
         trajectory = aspect.xyz
 
@@ -91,6 +109,17 @@ class RigidBonesEnforcement(AnatomicalCalculation):
         
 
 class CalculationPipeline:
+    """
+    A sequence of anatomical calculations to run on an aspect.
+
+    Each task must be a subclass of `AnatomicalCalculation`, implementing
+    both `calculate()` and `store()` methods.
+
+    Parameters
+    ----------
+    tasks : list of AnatomicalCalculation
+        Calculation classes to apply in order.
+    """
     def __init__(self, tasks: list[AnatomicalCalculation]):
         self.tasks = tasks
 
