@@ -1,5 +1,5 @@
-from abc import ABC, abstractmethod
-from skellymodels.models.aspect import Aspect
+from skellymodels.models.aspect import Aspect, TrajectoryNames
+from skellymodels.models.trajectory import Trajectory
 
 from skellymodels.biomechanics.calculations.calculate_center_of_mass import calculate_center_of_mass
 from skellymodels.biomechanics.calculations.enforce_rigid_bones import enforce_rigid_bones
@@ -7,6 +7,17 @@ from skellymodels.biomechanics.models.anatomical_calculation import AnatomicalCa
 
 
 class CenterOfMassCalculation(AnatomicalCalculation):
+    """
+    Calculates segment-level and total-body center of mass trajectories.
+
+    Requires the aspect's AnatomicalStructure to define:
+    - segment_connections
+    - center_of_mass_definitions
+
+    Adds two new trajectories to the aspect:
+    - 'total_body_com' (Trajectory with a single virtual marker)
+    - 'segment_com' (Trajectory with one marker per segment)
+    """
     def calculate(self, aspect:Aspect) -> CalculationResult:
         if not aspect.anatomical_structure.center_of_mass_definitions:
             return CalculationResult(
@@ -15,10 +26,10 @@ class CenterOfMassCalculation(AnatomicalCalculation):
                 messages=[f'No COM definitions for aspect: {aspect.name}, skipping COM calculation']
             )
 
-        trajectory = aspect.trajectories['3d_xyz'] #NOTE: maybe put this in a try/except loop where the except also returns a CalcResult? with success=False
+        trajectory = aspect.xyz #NOTE: maybe put this in a try/except loop where the except also returns a CalcResult? with success=False
 
         total_body_com, segment_com = calculate_center_of_mass(
-            segment_positions=trajectory.segment_data,
+            segment_positions=trajectory.segment_data(aspect.anatomical_structure.segment_connections),
             center_of_mass_definitions=aspect.anatomical_structure.center_of_mass_definitions,
             num_frames=trajectory.num_frames
         )
@@ -26,8 +37,8 @@ class CenterOfMassCalculation(AnatomicalCalculation):
         return CalculationResult(
             success = True,
             data = {
-                'total_body_com': total_body_com,
-                'segment_com': segment_com
+                TrajectoryNames.TOTAL_BODY_COM.value: total_body_com,
+                TrajectoryNames.SEGMENT_COM.value: segment_com
             },
             messages=[f'Successfully calculated COM for aspect: {aspect.name}'] 
         )
@@ -36,15 +47,33 @@ class CenterOfMassCalculation(AnatomicalCalculation):
         if not results.success:
             return
         
-        aspect.add_segment_center_of_mass(results.data['segment_com'])
-        aspect.add_total_body_center_of_mass(results.data['total_body_com'])
-        f = 2
+        tb_com_trajectory = Trajectory(
+            name=TrajectoryNames.TOTAL_BODY_COM.value,
+            array=results.data[TrajectoryNames.TOTAL_BODY_COM.value],
+            landmark_names =[TrajectoryNames.TOTAL_BODY_COM.value],
+        )
 
+        segment_com_trajectory = Trajectory(
+            name=TrajectoryNames.SEGMENT_COM.value,
+            array=results.data[TrajectoryNames.SEGMENT_COM.value],
+            landmark_names=list(aspect.anatomical_structure.center_of_mass_definitions.keys()),
+        )
 
-    
-
+        aspect.add_trajectory(
+            {TrajectoryNames.TOTAL_BODY_COM.value: tb_com_trajectory,
+            TrajectoryNames.SEGMENT_COM.value: segment_com_trajectory}
+        )
 
 class RigidBonesEnforcement(AnatomicalCalculation):
+    """
+    Enforces rigid bone constraints using a joint hierarchy.
+
+    Requires the aspect's AnatomicalStructure to define:
+    - joint_hierarchy
+
+    Adds one new trajectory to the aspect:
+    - 'rigid_3d_xyz' (rigidified marker trajectories)
+    """
     def calculate(self, aspect:Aspect) -> CalculationResult:
         if not aspect.anatomical_structure.joint_hierarchy:
             return CalculationResult(
@@ -52,19 +81,17 @@ class RigidBonesEnforcement(AnatomicalCalculation):
                 data = {},
                 messages = [f'No joint hierarchy defined for aspect: {aspect.name}, skipping rigid bones enforcement']
             )
-
-        print('Enforcing rigid bones for aspect:', aspect.name)
         
-        trajectory = aspect.trajectories['3d_xyz']
+        trajectory = aspect.xyz
 
         rigid_marker_data = enforce_rigid_bones(
-            marker_trajectories=trajectory.data,
+            marker_trajectories=trajectory.as_dict,
             joint_hierarchy= aspect.anatomical_structure.joint_hierarchy
         )
 
         return CalculationResult(
             success=True,
-            data = {'rigid_bones': rigid_marker_data},
+            data = {TrajectoryNames.RIGID_XYZ.value: rigid_marker_data},
             messages= [f'Successfully enforced rigid bones for aspect: {aspect.name}']
         )
 
@@ -72,13 +99,27 @@ class RigidBonesEnforcement(AnatomicalCalculation):
         if not results.success:
             return
         
-        aspect.add_rigid_body_data(
-            rigid_body_data=results.data['rigid_bones']
-        )
-
-
+        aspect.add_trajectory(
+            {TrajectoryNames.RIGID_XYZ.value : Trajectory(
+            name=TrajectoryNames.RIGID_XYZ.value,
+            array=results.data[TrajectoryNames.RIGID_XYZ.value],
+            landmark_names=aspect.anatomical_structure.landmark_names,
+            segment_connections=aspect.anatomical_structure.segment_connections
+        )})
+        
 
 class CalculationPipeline:
+    """
+    A sequence of anatomical calculations to run on an aspect.
+
+    Each task must be a subclass of `AnatomicalCalculation`, implementing
+    both `calculate()` and `store()` methods.
+
+    Parameters
+    ----------
+    tasks : list of AnatomicalCalculation
+        Calculation classes to apply in order.
+    """
     def __init__(self, tasks: list[AnatomicalCalculation]):
         self.tasks = tasks
 
@@ -86,7 +127,7 @@ class CalculationPipeline:
         """Instantiate tasks and run calculate_and_store on the given aspect."""
         results_log = []
         for task_cls in self.tasks:
-            task_instance = task_cls()  
+            task_instance:AnatomicalCalculation = task_cls()  
             results = task_instance.calculate_and_store(aspect)
 
             if results:

@@ -120,7 +120,7 @@ for aspect in human.aspects.values():
 
         aspect.add_trajectory(name = 'rigid_3d_xyz',
                                 data = rigid_bones,
-                                marker_names = aspect.anatomical_structure.marker_names)
+                                marker_names = aspect.anatomical_structure.landmark_names)
     else:
         print('Skipping rigid bones enforcement for aspect:', aspect.name)
 pprint([human.aspects.values()])
