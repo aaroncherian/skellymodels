@@ -8,6 +8,25 @@ class AnimalAspectName(Enum):
     BODY = "body"
 
 class Animal(Actor):
+    """
+    Specialized Actor class for a tracked animal.
+
+    This subclass sets up a single 'body' aspect using the provided 
+    model configuration. 
+
+    Parameters
+    ----------
+    name: str
+        Identifier for the animal 
+    model_info: ModelInfo
+        Model configuration specifiying marker names, segment structure, and slicing information
+        
+    Attributes
+    ----------
+    body : Aspect
+        The sole aspect of the animal, corresponding to the full body.
+    """
+
     def __init__(self, name: str, model_info:ModelInfo):
         super().__init__(name, model_info)
         self._add_body()
