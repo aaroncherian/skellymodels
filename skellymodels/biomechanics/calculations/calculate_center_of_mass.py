@@ -1,10 +1,5 @@
-import logging
 from typing import Dict, Tuple
 import numpy as np
-
-
-# logger = logging.getLogger(__name__)
-
 
 def calculate_all_segments_com(
     segment_positions: Dict[str, Dict[str, np.ndarray]], center_of_mass_definitions: Dict[str, Dict[str, float]]
