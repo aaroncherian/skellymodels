@@ -20,9 +20,6 @@ class CalculationResult:
     success: bool
     data: Dict[str, Any]
     messages: List[str]
-    success: bool
-    data: Dict[str, Any]
-    messages: List[str]
 
 class AnatomicalCalculation(ABC):
     """
