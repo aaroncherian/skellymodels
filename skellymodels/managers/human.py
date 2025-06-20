@@ -56,7 +56,7 @@ class Human(Animal):
                 )
     
     @property
-    def face(self) -> Aspect:
+    def face(self) -> Aspect|None:
         """
         Returns the face aspect, if available.
 
@@ -67,7 +67,7 @@ class Human(Animal):
         return self.aspects.get(HumanAspectNames.FACE.value)
     
     @property
-    def left_hand(self) -> Aspect:
+    def left_hand(self) -> Aspect|None:
         """
         Returns the left hand aspect, if available.
 
@@ -78,7 +78,7 @@ class Human(Animal):
         return self.aspects.get(HumanAspectNames.LEFT_HAND.value)
     
     @property
-    def right_hand(self) -> Aspect:
+    def right_hand(self) -> Aspect|None:
         """
         Returns the right hand aspect, if available.
 
