@@ -1,6 +1,5 @@
 from pydantic import BaseModel, Field, model_validator, ConfigDict
-
-from skellymodels.builders.anatomical_structure_builder import create_anatomical_structure_from_model_info
+from skellymodels.models.anatomical_structure import AnatomicalStructure
 from skellymodels.tracker_info.model_info import ModelInfo
 from skellymodels.models.anatomical_structure import AnatomicalStructure
 from skellymodels.models.error import Error
@@ -37,8 +36,11 @@ class Aspect(BaseModel):
             model_info (ModelInfo): ModelInfo class instance
             metadata (Optional[Dict[str, Any]]): Additional information about the aspect (include the 'tracker)
         """
-        anatomical_structure_dict = create_anatomical_structure_from_model_info(model_info=model_info)
-        return cls(name=name, anatomical_structure=anatomical_structure_dict[name], metadata=metadata)
+        anatomical_structure = AnatomicalStructure.from_model_info(
+            model_info=model_info,
+            aspect_name=name
+        )
+        return cls(name=name, anatomical_structure=anatomical_structure, metadata=metadata)
 
     def add_trajectory(self, 
                        dict_of_trajectories: Dict[str, Trajectory]):
