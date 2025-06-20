@@ -16,7 +16,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 FREEMOCAP_PARQUET_NAME = 'freemocap_data_by_frame.parquet'
-
 class Actor(ABC):
     """
     The Actor class is a container for multiple *aspects* (e.g. body, face, hands) that belong to a single actor,
@@ -46,8 +45,6 @@ class Actor(ABC):
     model_info: ModelInfo
         Original configuration object
     """
-
-    
 
     def __init__(self, name: str, model_info: ModelInfo):
         self.name = name
