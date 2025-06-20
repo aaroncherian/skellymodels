@@ -34,9 +34,7 @@ class ModelInfo:
         self.tracked_point_names: List[str] = [tp for aspect in self.aspects.values() for tp in aspect.tracked_points_names]
         self.num_tracked_points:str = sum([aspect.num_tracked_points for aspect in self.aspects.values()])
         self.order = config['order']
-        # self.aspect_order_and_slices: Dict[str, slice] = self._get_aspect_order_and_slices(config)
         self.tracked_point_slices = self._build_slices(include_virtuals=False)
-        self.landmark_slices = self._build_slices(include_virtuals=True)
 
     def _load_config(self, config_path:Path):
         with open(config_path, 'r') as f:

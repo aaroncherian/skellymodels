@@ -11,21 +11,50 @@ from skellymodels.tracker_info.model_info import ModelInfo
 from skellymodels.biomechanics.anatomical_calculations import CalculationPipeline, STANDARD_PIPELINE
 
 from pathlib import Path
+import logging
+
+logger = logging.getLogger(__name__)
 
 FREEMOCAP_PARQUET_NAME = 'freemocap_data_by_frame.parquet'
 
 class Actor(ABC):
     """
-    The Actor class is a container for multiple Aspects of a single person/creature/object that we track in 3D.
+    The Actor class is a container for multiple *aspects* (e.g. body, face, hands) that belong to a single actor,
+    which is the thing being tracked in 3D (human, animal, etc.)
+    
+    Parameters
+    ----------
+    name : str
+        Identifier for this actor
+    model_info: ModelInfo
+        Parsed YAML configuration describing tracker ouput and anatomy of the actor
+    
+    Attributes
+    ----------
+    name: str
+        Actor identifier
+    aspects: dict[str, Aspects]
+        Maps aspect name to an Aspect instance
+    tracker: str
+        Name of the underlying pose estimation model (e.g. 'mediapipe'), taken from 
+        the model_info
+    aspect_order: list[str]
+        The aspect order used when slicing the raw tracker-output data (e.g. specifiying
+        whether the raw data comes in body/hands/face order or body/face/hands and so on)
+    tracker_point_slices: dict[str, slice]
+        Slices into the raw tracked points array for each aspect
+    model_info: ModelInfo
+        Original configuration object
     """
 
-    def __init__(self, name: str, model_info: ModelInfo, **kwargs):
+    
+
+    def __init__(self, name: str, model_info: ModelInfo):
         self.name = name
         self.aspects: Dict[str, Aspect] = {}
         self.tracker = model_info.name #the day we allow for separate pose estimation for different things (body/hands/face), we (I) may regret this
         self.aspect_order = model_info.order
         self.tracked_point_slices = model_info.tracked_point_slices
-        self.landmark_slices = model_info.landmark_slices
         self.model_info = model_info
 
     def __getitem__(self, key: str):
@@ -52,38 +81,50 @@ class Actor(ABC):
     @abstractmethod
     def add_tracked_points_numpy(self, tracked_points_numpy_array: np.ndarray):
         """
-        Takes in the tracked points array, splits and categorizes it based on the ranges determined by the ModelInfo,
-        and adds it as a tracked point Trajectory to the body, and optionally face/hands aspects 
+        Ingest a ``(num_frames, num_markers, 3)`` array of 3D joint position data and distributes the data to
+        the correct Aspect istances of the class
+
+        Parameters
+        ----------
+        tracked_points_numpy_array : ndarray, shape (F, M, 3)
+            Raw 3-D tracker output in the order defined by the YAML
+            file.
         """
         pass
     
     @classmethod
-    def from_tracked_points_numpy_array(cls, name: str, model_info: ModelInfo, tracked_points_numpy_array: np.ndarray):
+    def from_tracked_points_numpy_array(cls, name: str, model_info: ModelInfo, tracked_points_numpy_array: np.ndarray) -> "Actor":
         """
-        Takes in a numpy array of tracked points and returns an Actor object with the tracked points added in aspects
+        Convenience wrapper to instantiate an ``Actor`` and feed it tracker data
         """
         actor = cls(name=name, model_info=model_info)
         actor.add_tracked_points_numpy(tracked_points_numpy_array=tracked_points_numpy_array)
         return actor
     
     @classmethod
-    def from_data(cls, model_info: ModelInfo, path_to_data_folder: Path|str):
+    def from_data(cls, model_info: ModelInfo, path_to_data_folder: Path|str) -> "Actor":
         """
-        Given a path to a folder containing the ouput model data, this method will attempt to load the data from a Parquet file.
+        Convenience wrapper to instantiate an ``Actor`` from previously saved out output data
+
+        The function currently expects a file named ``freemocap_data_by_frame.parquet`` inside
+        *path_to_data_folder*.
         """
         #Later on, if needed, we can consider fallback methods to loading from the big CSV or all the individual CSVs as well
         try:
             parquet_file = path_to_data_folder / FREEMOCAP_PARQUET_NAME
             return cls.from_parquet(model_info, parquet_file)
         except FileNotFoundError:
-            print(f"Could not find parquet file at {parquet_file}")
+            logger.warning(f"Could not find parquet file at {parquet_file}")
         except Exception as e:
-            print(f"Failed to load from Parquet: {e}")
+            logger.warning(f"Failed to load from Parquet: {e}")
             
         raise RuntimeError(f"Could not load data from {path_to_data_folder}")
     
     @classmethod
     def from_parquet(cls, model_info: ModelInfo, path_to_parquet_file: Path|str):
+        """
+        Convience warpper to instantiate an ``Actor`` from the ``freemocap_data_by_frame.parquet`` file
+        """
         path_to_parquet_file = Path(path_to_parquet_file)
         dataframe = pd.read_parquet(path_to_parquet_file)
 
@@ -97,9 +138,17 @@ class Actor(ABC):
         return actor
     
     def add_aspect(self, aspect: Aspect):
+        """
+        Add an Aspect instance to the actor 
+        """
         self.aspects[aspect.name] = aspect
         
     def aspect_from_model_info(self, name:str) -> None:
+        """
+        Creates a structured Aspect from the model_info configuration. This Aspect will
+        have a defined/validated AnatomicalStructure (marker names, virtual markers, center of mass, etc.)
+        that will be used for data
+        """
         aspect:Aspect = Aspect.from_model_info(
             name = name,
             model_info = self.model_info,
@@ -108,14 +157,21 @@ class Actor(ABC):
         self.add_aspect(aspect)
 
     def calculate(self, pipeline:CalculationPipeline = STANDARD_PIPELINE):
+        """
+        Runs the biomechanics pipeline to for anatomical calculations (i.e. center of mass calculation, rigid bones enforcement)
+        """
+        
         for aspect in self.aspects.values():
             results_logs = pipeline.run(aspect=aspect)
 
-            print(f"\nResults for aspect {aspect.name}:")
+            logger.info(f"\nResults for aspect {aspect.name}:")
             for msg in results_logs:
-                print(f"  {msg}")
+                logger.info(f"  {msg}")
 
     def all_data_as_dataframe(self) -> pd.DataFrame:
+        """
+        Collect every trajectory from every aspect into one tidy-formatted DataFrame
+        """
         all_data = []
 
         # Loop through aspects
@@ -150,6 +206,10 @@ class Actor(ABC):
         return big_df
 
     def save_out_numpy_data(self, path_to_output_folder: Optional[Path] = None):
+        """
+        Saves out a .npy file for each Trajectory in each Aspect with format {tracker_name}_{aspect}_{trajectory} 
+        (i.e. 'mediapipe_body_3d_xyz')
+        """
         if path_to_output_folder is None:
             path_to_output_folder = Path.cwd()
 
@@ -158,9 +218,13 @@ class Actor(ABC):
                 save_path = path_to_output_folder / f"{aspect.metadata['tracker_type']}_{aspect.name}_{trajectory.name}.npy"
                 np.save(save_path,
                         trajectory.as_array) 
-                print(f"Saved out {save_path}")
+                logger.info(f"Saved out {save_path}")
 
     def save_out_csv_data(self, path_to_output_folder: Optional[Path] = None):
+        """
+        Saves out a .csv file for each Trajectory in each Aspect with format {tracker_name}_{aspect}_{trajectory} 
+        (i.e. 'mediapipe_body_3d_xyz')
+        """
         if path_to_output_folder is None:
             path_to_output_folder = Path.cwd()
 
@@ -168,16 +232,23 @@ class Actor(ABC):
             for trajectory in aspect.trajectories.values():
                 save_path = path_to_output_folder / f"{aspect.metadata['tracker_type']}_{aspect.name}_{trajectory.name}.csv"
                 trajectory.as_dataframe.to_csv(path_to_output_folder/f"{aspect.metadata['tracker_type']}_{aspect.name}_{trajectory.name}.csv")
-                print(f"Saved out {save_path}") 
+                logger.info(f"Saved out {save_path}") 
 
     def save_out_all_data_csv(self, path_to_output_folder: Optional[Path] = None):
+        """
+        Saves out a CSV in tidy format with all Trajectories from all Aspects
+        """
         if path_to_output_folder is None:
             path_to_output_folder = Path.cwd()
         save_path = path_to_output_folder / 'freemocap_data_by_frame.csv'    
         self.all_data_as_dataframe().to_csv(save_path, index=False)
-        print(f"Data successfully saved to {save_path}")
+        logger.info(f"Data successfully saved to {save_path}")
 
     def save_out_all_data_parquet(self, path_to_output_folder: Optional[Path] = None):
+        """
+        Saves out a Parquet file using the same dataframe created in `all_data_as_dataframe` and 
+        adds additional metadata to the file.
+        """
         if path_to_output_folder is None:
             path_to_output_folder = Path.cwd()
 
@@ -190,9 +261,13 @@ class Actor(ABC):
         }
         save_path = path_to_output_folder / FREEMOCAP_PARQUET_NAME
         dataframe.to_parquet(save_path)
-        print(f"Data successfully saved to {save_path}")
+        logger.info(f"Data successfully saved to {save_path}")
 
     def sort_parquet_dataframe(self, dataframe:pd.DataFrame):
+        """
+        Used when running the `from_parquet` class method to sort through the Parquet and distribute the data
+        back into Aspects and Trajectories that can be added to the actor 
+        """
         num_frames = dataframe['frame'].nunique()
         expected_models = {f"{self.tracker}.{aspect_name}" for aspect_name in self.aspects}
 
