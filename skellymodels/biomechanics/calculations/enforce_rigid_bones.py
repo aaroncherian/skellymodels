@@ -3,15 +3,33 @@ import numpy as np
 from typing import Dict, List, Union,Tuple
 from collections import deque
 from skellymodels.utils.types import MarkerName
+import logging
+
+logger = logging.getLogger(__name__)
 
 def calculate_bone_lengths_and_statistics(
         marker_trajectories: Dict[MarkerName, np.ndarray],
         joint_hierarchy: Dict[str, List[str]],
 ) -> Dict[Tuple[str, str], Dict[str, float]]:
+    """
+    Compute median and standard deviation of bone lengths across all frames.
+
+    Parameters
+    ----------
+    marker_trajectories : dict of {str: np.ndarray of shape (num_frames, 3)}
+        Raw 3D position data for each marker.
+    joint_hierarchy : dict of {str: list[str]}
+        Parent-to-children mapping of joint connections.
+
+    Returns
+    -------
+    dict of {(parent, child): {"median": float, "stdev": float}}
+        Bone statistics for each joint pair.
+    """
     bone_stats = {}
     for parent, children in joint_hierarchy.items():
         parent_xyz = marker_trajectories[parent]
-        print(f"\nBone lengths from '{parent}' to:")
+        logger.info(f"\nBone lengths from '{parent}' to:")
 
         for child in children:
             child_xyz = marker_trajectories[child]
@@ -25,7 +43,7 @@ def calculate_bone_lengths_and_statistics(
                 "stdev":  stdev,
             }
 
-            print(f"  - '{child}': median = {median:.2f}, stdev = {stdev:.2f}")
+            logger.info(f"  - '{child}': median = {median:.2f}, stdev = {stdev:.2f}")
     return bone_stats
 
 def rigidify_bones(
@@ -111,7 +129,6 @@ def merge_rigid_marker_data(rigid_marker_data: Dict[str, np.ndarray]) -> np.ndar
     return np.stack(rigid_marker_data_list, axis=1)
 
 
-
 def rigidify_forward_pass(
         marker_trajectories: Dict[MarkerName, np.ndarray],
         joint_hierarchy: Dict[str, List[str]],
@@ -146,14 +163,26 @@ def rigidify_forward_pass(
     return {name: rigid_data[:, i, :] for i, name in enumerate(marker_names)}
 
 
-
-
-    
-
 def enforce_rigid_bones(marker_trajectories:dict[MarkerName, np.ndarray],
                         joint_hierarchy: Dict[str, List[str]]
                         ):
-    
+    """
+    Enforce rigid bone lengths on marker data by adjusting child positions.
+
+    This wrapper handles bone length measurement, rigidification, and final reformatting.
+
+    Parameters
+    ----------
+    marker_trajectories : dict of {str: np.ndarray of shape (num_frames, 3)}
+        Input 3D marker positions.
+    joint_hierarchy : dict of {str: list[str]}
+        Skeleton hierarchy for bone traversal.
+
+    Returns
+    -------
+    np.ndarray of shape (num_frames, num_markers, 3)
+        Rigidified marker array in the same order as input.
+    """
     bone_lengths_and_statistics = calculate_bone_lengths_and_statistics(
         marker_trajectories=marker_trajectories,
         joint_hierarchy=joint_hierarchy
@@ -165,5 +194,4 @@ def enforce_rigid_bones(marker_trajectories:dict[MarkerName, np.ndarray],
         joint_hierarchy=joint_hierarchy
     )
     
-    f = 2
     return merge_rigid_marker_data(rigid_marker_data)
