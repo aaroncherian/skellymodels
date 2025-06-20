@@ -4,11 +4,27 @@ from skellymodels.utils.types import MarkerName, SegmentName, VirtualMarkerDefin
 from skellymodels.tracker_info.model_info import ModelInfo
 
 class AnatomicalStructure(BaseModel):
-    """A data class representing the anatomical structure of a tracked object, defining its
-    landmarks, virtual markers, segments, and center of mass definitions and joint hierarchy. 
-    The latter three are used in calculating center of mass and enforcing rigid bones for the object.
+    """
+    A validated data structure representing the anatomical layout of a tracked subject.
 
-    The structure is typically constructed via `from_model_info()`.
+    This model defines tracked markers, optional virtual markers, segment definitions,
+    center of mass mappings, and joint hierarchies. It is typically constructed from a
+    ModelInfo instance and used downstream for anatomical calculations (e.g. center of
+    mass computation, rigid segment enforcement).
+
+    Parameters
+    ----------
+    tracked_point_names : list of str
+        Ordered list of marker names being output from the pose estimation tracker 
+    virtual_markers_definitions : dict[str, VirtualMarkerDefinition], optional
+        Definitions for computed markers based on weighted combinations of other markers.
+    segment_connections : dict[SegmentName, SegmentConnection], optional
+        Mapping of segments to their proximal/distal marker definitions.
+    center_of_mass_definitions : dict[SegmentName, SegmentCenterOfMassDefinition], optional
+        Definitions for computing segment-level center of mass.
+    joint_hierarchy : dict[MarkerName, list[MarkerName]], optional
+        Mapping of parent marker names to their immediate children, used for building
+        skeletal graphs.
     """
     tracked_point_names: List[MarkerName]
     virtual_markers_definitions: Dict[str, VirtualMarkerDefinition]|None = None
@@ -20,6 +36,15 @@ class AnatomicalStructure(BaseModel):
     
     @model_validator(mode="after")
     def _cross_field_checks(self):
+        """
+        Cross-field validator to ensure all references between components are valid.
+
+        Raises
+        ------
+        ValueError
+            If virtual markers, segment connections, CoM definitions, or joint hierarchies
+            reference undefined or invalid markers.
+        """
         valid_marker_names = set(self.tracked_point_names)
 
         if self.virtual_markers_definitions:
@@ -83,6 +108,21 @@ class AnatomicalStructure(BaseModel):
 
     @classmethod
     def from_model_info(cls, model_info:ModelInfo, aspect_name:str):
+        """
+        Factory method to create an AnatomicalStructure from a ModelInfo instance.
+
+        Parameters
+        ----------
+        model_info : ModelInfo
+            Parsed model configuration.
+        aspect_name : str
+            Name of the aspect to build (e.g. 'body', 'face').
+
+        Returns
+        -------
+        AnatomicalStructure
+            Fully validated structure for the given aspect.
+        """
         aspect_structure = model_info.aspects[aspect_name]
         return cls(
             tracked_point_names = aspect_structure.tracked_points_names,
@@ -92,9 +132,16 @@ class AnatomicalStructure(BaseModel):
             joint_hierarchy = aspect_structure.joint_hierarchy
         )
 
-
     @property
     def landmark_names(self) -> list[MarkerName]:
+        """
+        Returns a combined list of tracked and virtual marker names.
+
+        Returns
+        -------
+        list of str
+            Full list of marker names in order.
+        """
         landmark_names = self.tracked_point_names.copy()
         if self.virtual_markers_definitions:
             landmark_names.extend(self.virtual_markers_definitions.keys())
@@ -102,6 +149,14 @@ class AnatomicalStructure(BaseModel):
 
     @property
     def virtual_marker_names(self) -> list[MarkerName]:
+        """
+        Returns only the virtual marker names.
+
+        Returns
+        -------
+        list of str
+            Names of virtual markers defined in the structure.
+        """
         if not self.virtual_markers_definitions:
             return []
         return list(self.virtual_markers_definitions.keys())
