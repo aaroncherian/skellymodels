@@ -5,6 +5,17 @@ from typing import List
 from skellymodels.utils.types import MarkerName
 
 class Error(BaseModel):
+    """
+    A container for time-series error data associated with tracked 3D markers.
+
+    This class holds error values (e.g., reprojection error) for each marker across time,
+    and provides utilities to access that data as an array, dictionary, or tidy dataframe.
+
+    Attributes:
+        name (str): Identifier for this error dataset.
+        array (np.ndarray): A 2D array of shape (num_frames, num_markers) containing error values.
+        marker_names (List[MarkerName]): The ordered list of marker names corresponding to columns in `array`.
+    """
     name: str
     array: np.ndarray
     marker_names: List[MarkerName]
