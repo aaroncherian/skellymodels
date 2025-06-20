@@ -131,7 +131,7 @@ class Actor(ABC):
         if set(actor.aspect_order) != set(dataframe.attrs['metadata']['aspects']): #Want to come back around and make a more robust check
             raise ValueError(f"Aspects in parquet file {dataframe.attrs['metadata']['aspects']} do not match aspects specified in model info {actor.aspect_order}")
 
-        actor.sort_parquet_dataframe(dataframe)
+        actor.populate_aspects_from_parquet(dataframe)
         return actor
     
     def add_aspect(self, aspect: Aspect):
@@ -260,7 +260,7 @@ class Actor(ABC):
         dataframe.to_parquet(save_path)
         logger.info(f"Data successfully saved to {save_path}")
 
-    def sort_parquet_dataframe(self, dataframe:pd.DataFrame):
+    def populate_aspects_from_parquet(self, dataframe:pd.DataFrame):
         """
         Used when running the `from_parquet` class method to sort through the Parquet and distribute the data
         back into Aspects and Trajectories that can be added to the actor 
