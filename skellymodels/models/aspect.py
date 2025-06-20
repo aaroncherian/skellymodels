@@ -17,6 +17,33 @@ class TrajectoryNames(Enum):
     SEGMENT_COM = 'segment_com'
 
 class Aspect(BaseModel):
+    """
+    A modular unit representing a tracked anatomical region (e.g., body, face, hand).
+
+    Each `Aspect` contains:
+    - an `AnatomicalStructure` definition (which provides the scaffold),
+    - a dictionary of `Trajectory` objects for time-series motion data,
+    - optional `Error` data (e.g., reprojection error),
+    - metadata for labeling or downstream tools.
+
+    Parameters
+    ----------
+    name : str
+        Name of the aspect (e.g. "body", "face", "left_hand").
+    anatomical_structure : AnatomicalStructure
+        Model defining marker layout, virtual markers, segments, and joint structure.
+    trajectories : dict[str, Trajectory], optional
+        Dictionary mapping trajectory names (e.g. "3d_xyz") to trajectory data.
+    reprojection_error : Error, optional
+        2D array of reprojection errors (frames x markers) from the original tracker.
+    metadata : dict[str, Any], optional
+        Arbitrary metadata attached to this aspect (e.g. tracker name, units).
+
+    Notes
+    -----
+    Typical usage involves initializing from a `ModelInfo` with `.from_model_info()`,
+    followed by calls to `.add_tracked_points()` and optionally `.add_reprojection_error()`.
+    """
     name: str
     anatomical_structure: AnatomicalStructure
     trajectories: dict[str,Trajectory] = Field(default_factory=dict)
@@ -28,13 +55,23 @@ class Aspect(BaseModel):
         validate_assignment=True) #validates after the model is changed
     
     @classmethod
-    def from_model_info(cls, name: str, model_info: ModelInfo, metadata: Optional[Dict[str, Any]] = None):
-        """ Class method to create an Aspect from a ModelInfo instance
-        
-        Args:
-            name (str): Identifier for the aspect (e.g., "body", "face", "left_hand")
-            model_info (ModelInfo): ModelInfo class instance
-            metadata (Optional[Dict[str, Any]]): Additional information about the aspect (include the 'tracker)
+    def from_model_info(cls, name: str, model_info: ModelInfo, metadata: Optional[Dict[str, Any]] = None) -> "Aspect":
+        """
+        Creates an Aspect from a `ModelInfo` configuration.
+
+        Parameters
+        ----------
+        name : str
+            Name of the aspect (e.g. "body", "face").
+        model_info : ModelInfo
+            Full configuration containing marker and segment definitions.
+        metadata : dict, optional
+            Extra data to attach (e.g. tracker_type).
+
+        Returns
+        -------
+        Aspect
+            An initialized Aspect with structure loaded.
         """
         anatomical_structure = AnatomicalStructure.from_model_info(
             model_info=model_info,
@@ -44,7 +81,19 @@ class Aspect(BaseModel):
 
     def add_trajectory(self, 
                        dict_of_trajectories: Dict[str, Trajectory]):
-        """ Adds all trajectories from a dictionary to the aspect."""
+        """
+        Adds one or more named trajectory objects to this aspect.
+
+        Parameters
+        ----------
+        dict_of_trajectories : dict
+            Dictionary mapping names to Trajectory instances.
+
+        Raises
+        ------
+        TypeError
+            If any value is not a `Trajectory`.
+        """
         for name, trajectory in dict_of_trajectories.items():
             if not isinstance(trajectory, Trajectory):
                 raise TypeError(f"Expected Trajectory instance for {name}, got {type(trajectory)}")
@@ -52,7 +101,15 @@ class Aspect(BaseModel):
             #add check for whether the trajectory name is in the expected list (and make an expected enum list)
 
     def add_tracked_points(self, tracked_points:np.ndarray):
-        """Ingests tracked points data and adds it to the aspect as a trajectory"""
+        """
+        Ingests a raw `(num_frames, num_markers, 3)` array of marker data and adds it as a
+        trajectory using the anatomical structure.
+
+        Parameters
+        ----------
+        tracked_points : np.ndarray
+            Tracked XYZ marker array, excluding virtual markers.
+        """
 
         if self.anatomical_structure is None:
             raise ValueError("Anatomical structure and tracked point names are required to ingest tracker data.")
@@ -66,7 +123,19 @@ class Aspect(BaseModel):
         self.add_trajectory({TrajectoryNames.XYZ.value: trajectory})
 
     def add_reprojection_error(self, reprojection_error_data: np.ndarray):
-        # TODO: This could be a feature of the trajectory as well, but I'm leaning towards aspect taking care of it
+        """
+        Attaches a 2D array of reprojection error values.
+
+        Parameters
+        ----------
+        reprojection_error_data : np.ndarray of shape (num_frames, num_markers)
+            Error values per marker per frame.
+
+        Raises
+        ------
+        ValueError
+            If the array shape does not match trajectory expectations.
+        """
         if self.trajectories.get(TrajectoryNames.XYZ.value) is not None:
             if reprojection_error_data.shape[0] != self.trajectories[TrajectoryNames.XYZ.value].num_frames:
                 raise ValueError(
@@ -80,26 +149,58 @@ class Aspect(BaseModel):
                                         marker_names=self.anatomical_structure.tracked_point_names)
 
     def add_metadata(self, metadata: Dict[str, Any]):
+        """
+        Adds additional metadata fields to this aspect.
+
+        Parameters
+        ----------
+        metadata : dict
+            Dictionary of key–value pairs to merge into existing metadata.
+        """
         self.metadata.update(metadata)
 
     @property
     def xyz(self) -> Optional[Trajectory]:
-        """Returns the 3D XYZ trajectory if it exists, otherwise None."""
+        """
+        Returns the 3D XYZ trajectory (raw marker positions), if present.
+
+        Returns
+        -------
+        Trajectory or None
+        """
         return self.trajectories.get(TrajectoryNames.XYZ.value)
     
     @property
     def rigid_xyz(self) -> Optional[Trajectory]:
-        """Returns the rigid body 3D XYZ trajectory if it exists, otherwise None."""
+        """
+        Returns the rigid-body 3D trajectory, if present.
+
+        Returns
+        -------
+        Trajectory or None
+        """        
         return self.trajectories.get(TrajectoryNames.RIGID_XYZ.value)
 
     @property
     def total_body_com(self) -> Optional[Trajectory]:
-        """Returns the total body center of mass trajectory if it exists, otherwise None."""
+        """
+        Returns the trajectory for total-body center of mass, if present.
+
+        Returns
+        -------
+        Trajectory or None
+        """
         return self.trajectories.get(TrajectoryNames.TOTAL_BODY_COM.value)
     
     @property
     def segment_com(self) -> Optional[Dict[SegmentName, Trajectory]]:
-        """Returns the segment center of mass trajectory if it exists, otherwise None."""
+        """
+        Returns the dictionary of segment center of mass trajectories, if present.
+
+        Returns
+        -------
+        dict or None
+        """        
         return self.trajectories.get(TrajectoryNames.SEGMENT_COM.value)
 
     def __str__(self):
