@@ -165,7 +165,7 @@ class Actor(ABC):
             for msg in results_logs:
                 logger.info(f"  {msg}")
 
-    def all_data_as_dataframe(self) -> pd.DataFrame:
+    def create_summary_dataframe(self) -> pd.DataFrame:
         """
         Collect every trajectory from every aspect into one tidy-formatted DataFrame
         """
@@ -201,6 +201,20 @@ class Actor(ABC):
         big_df = big_df.sort_values(by=['frame', 'model', 'type']).reset_index(drop=True)
 
         return big_df
+    
+    def create_summary_dataframe_with_metadata(self) -> pd.DataFrame:
+        """
+        Add metadata to the summary dataframe for saving out a Parquet
+        """
+        df = self.create_summary_dataframe()
+        df.attrs['metadata'] = {
+            'created_at': datetime.datetime.now().isoformat(),
+            'created_with': 'skelly_models',
+            'name': self.name,
+            'aspects': list(self.aspect_order)
+        }
+
+        return df
 
     def save_out_numpy_data(self, path_to_output_folder: Optional[Path] = None):
         """
@@ -238,24 +252,18 @@ class Actor(ABC):
         if path_to_output_folder is None:
             path_to_output_folder = Path.cwd()
         save_path = path_to_output_folder / 'freemocap_data_by_frame.csv'    
-        self.all_data_as_dataframe().to_csv(save_path, index=False)
+        self.create_summary_dataframe().to_csv(save_path, index=False)
         logger.info(f"Data successfully saved to {save_path}")
 
     def save_out_all_data_parquet(self, path_to_output_folder: Optional[Path] = None):
         """
-        Saves out a Parquet file using the same dataframe created in `all_data_as_dataframe` and 
+        Saves out a Parquet file using the same dataframe created in `create_summary_dataframe` and 
         adds additional metadata to the file.
         """
         if path_to_output_folder is None:
             path_to_output_folder = Path.cwd()
 
-        dataframe = self.all_data_as_dataframe()
-        dataframe.attrs['metadata'] = {
-            'created_at': datetime.datetime.now().isoformat(),
-            'created_with': 'skelly_models',
-            'name': self.name,
-            'aspects': list(self.aspect_order)
-        }
+        dataframe = self.create_summary_dataframe_with_metadata()
         save_path = path_to_output_folder / FREEMOCAP_PARQUET_NAME
         dataframe.to_parquet(save_path)
         logger.info(f"Data successfully saved to {save_path}")
