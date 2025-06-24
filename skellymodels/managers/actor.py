@@ -129,11 +129,11 @@ class Actor(ABC):
                 raise ValueError("No model_info found in parquet file, please provide a ModelInfo instance")
             model_info = ModelInfo.from_model_dict(dataframe.attrs['model_info'])
             
-        actor = cls(name =dataframe.attrs['metadata']['name'],
+        actor = cls(name =dataframe.attrs['model_info']['name'],
                     model_info = model_info)
 
-        if set(actor.aspect_order) != set(dataframe.attrs['metadata']['aspects']): #Want to come back around and make a more robust check
-            raise ValueError(f"Aspects in parquet file {dataframe.attrs['metadata']['aspects']} do not match aspects specified in model info {actor.aspect_order}")
+        if set(actor.aspect_order) != set(dataframe.attrs['model_info']['order']): #Want to come back around and make a more robust check
+            raise ValueError(f"Aspects in parquet file {dataframe.attrs['model_info']['order']} do not match aspects specified in model info {actor.aspect_order}")
 
         actor.populate_aspects_from_parquet(dataframe)
         return actor
@@ -214,8 +214,6 @@ class Actor(ABC):
         df.attrs['metadata'] = {
             'created_at': datetime.datetime.now().isoformat(),
             'created_with': 'skelly_models',
-            'name': self.name,
-            'aspects': list(self.aspect_order)
         }
 
         df.attrs['model_info'] = self.model_info.model_dump()
@@ -227,7 +225,7 @@ class Actor(ABC):
 
     def save_out_numpy_data(self, path_to_output_folder: Path|str|None = None):
         """
-        Saves out a .npy file for each Trajectory in each Aspect with format {tracker_name}_{aspect}_{trajectory} 
+        Saves out a .npy file for each Trajectory in each Aspect with format {tracker_type}_{aspect}_{trajectory} 
         (i.e. 'mediapipe_body_3d_xyz')
         """
         path_to_output_folder = self._set_output_folder(path_to_output_folder)
@@ -241,7 +239,7 @@ class Actor(ABC):
 
     def save_out_csv_data(self, path_to_output_folder: Path|str|None = None):
         """
-        Saves out a .csv file for each Trajectory in each Aspect with format {tracker_name}_{aspect}_{trajectory} 
+        Saves out a .csv file for each Trajectory in each Aspect with format {tracker_type}_{aspect}_{trajectory} 
         (i.e. 'mediapipe_body_3d_xyz')
         """
         path_to_output_folder = self._set_output_folder(path_to_output_folder)
