@@ -1,6 +1,6 @@
 from enum import Enum
 from skellymodels.managers.actor import Actor
-from skellymodels.tracker_info.model_info import ModelInfo
+from skellymodels.models.tracking_model_info import ModelInfo
 from skellymodels.models.aspect import Aspect
 import numpy as np
 

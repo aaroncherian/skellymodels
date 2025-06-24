@@ -7,7 +7,7 @@ from skellymodels.models.aspect import Aspect
 from skellymodels.models.trajectory import Trajectory
 from typing import Dict, Optional
 
-from skellymodels.tracker_info.model_info import ModelInfo
+from skellymodels.models.tracking_model_info import ModelInfo
 from skellymodels.biomechanics.anatomical_calculations import CalculationPipeline, STANDARD_PIPELINE
 
 from pathlib import Path
@@ -99,7 +99,7 @@ class Actor(ABC):
         return actor
     
     @classmethod
-    def from_data(cls, model_info: ModelInfo, path_to_data_folder: Path|str) -> "Actor":
+    def from_data(cls, path_to_data_folder: Path|str, model_info: ModelInfo|None = None) -> "Actor":
         """
         Convenience wrapper to instantiate an ``Actor`` from previously saved out output data
 
@@ -109,7 +109,7 @@ class Actor(ABC):
         #Later on, if needed, we can consider fallback methods to loading from the big CSV or all the individual CSVs as well
         try:
             parquet_file = path_to_data_folder / FREEMOCAP_PARQUET_NAME
-            return cls.from_parquet(model_info, parquet_file)
+            return cls.from_parquet(path_to_parquet_file = parquet_file)
         except FileNotFoundError:
             logger.warning(f"Could not find parquet file at {parquet_file}")
         except Exception as e:
@@ -118,13 +118,17 @@ class Actor(ABC):
         raise RuntimeError(f"Could not load data from {path_to_data_folder}")
     
     @classmethod
-    def from_parquet(cls, model_info: ModelInfo, path_to_parquet_file: Path|str):
+    def from_parquet(cls, path_to_parquet_file: Path|str, model_info: ModelInfo|None = None) -> "Actor":
         """
-        Convience warpper to instantiate an ``Actor`` from the ``freemocap_data_by_frame.parquet`` file
+        Convience wrapper to instantiate an ``Actor`` from the ``freemocap_data_by_frame.parquet`` file
         """
         path_to_parquet_file = Path(path_to_parquet_file)
         dataframe = pd.read_parquet(path_to_parquet_file)
-
+        if not model_info:
+            if 'model_info' not in dataframe.attrs:
+                raise ValueError("No model_info found in parquet file, please provide a ModelInfo instance")
+            model_info = ModelInfo.from_model_dict(dataframe.attrs['model_info'])
+            
         actor = cls(name =dataframe.attrs['metadata']['name'],
                     model_info = model_info)
 
@@ -214,6 +218,7 @@ class Actor(ABC):
             'aspects': list(self.aspect_order)
         }
 
+        df.attrs['model_info'] = self.model_info.model_dump()
         return df
 
     def _set_output_folder(self, path_to_output_folder: Path|str|None = None) -> Path:

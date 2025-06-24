@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, model_validator, ConfigDict
 from skellymodels.models.anatomical_structure import AnatomicalStructure
-from skellymodels.tracker_info.model_info import ModelInfo
+from skellymodels.models.tracking_model_info import ModelInfo
 from skellymodels.models.anatomical_structure import AnatomicalStructure
 from skellymodels.models.error import Error
 from skellymodels.models.trajectory import Trajectory
