@@ -258,7 +258,7 @@ class Actor(ABC):
 
         save_path = path_to_output_folder / 'freemocap_data_by_frame.csv'    
         self.create_summary_dataframe().to_csv(save_path, index=False)
-        logger.info(f"Data successfully saved to {save_path}")
+        logger.info(f"CSV successfully saved to {save_path}")
 
     def save_out_all_data_parquet(self, path_to_output_folder: Path|str|None = None):
         """
@@ -270,7 +270,20 @@ class Actor(ABC):
         dataframe = self.create_summary_dataframe_with_metadata()
         save_path = path_to_output_folder / FREEMOCAP_PARQUET_NAME
         dataframe.to_parquet(save_path)
-        logger.info(f"Data successfully saved to {save_path}")
+        logger.info(f"Parquet successfully saved to {save_path}")
+
+    def save_out_all_xyz_numpy_data(self, path_to_output_folder: Path|str|None = None):
+        """
+        Saves out a single .npy file with all xyz trajectories from all aspects
+        """
+        path_to_output_folder = self._set_output_folder(path_to_output_folder)
+
+        all_xyz_data = np.concatenate([self.aspects[aspect_name].xyz.as_array for aspect_name in self.aspect_order], axis = 1)
+
+        save_path = path_to_output_folder/f"{self.tracker}_skeleton_3d.npy"
+        np.save(save_path, all_xyz_data)
+        logger.info(f"Combined marker position numpy array saved to f{save_path}")
+        f = 2
 
     def populate_aspects_from_parquet(self, dataframe:pd.DataFrame):
         """
