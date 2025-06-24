@@ -180,7 +180,7 @@ class Actor(ABC):
                 
                 # Add metadata columns
                 trajectory_df['model'] = f"{aspect.metadata['tracker_type']}.{aspect_name}"
-                trajectory_df['type'] = trajectory_name  # Store the trajectory type
+                trajectory_df['trajectory'] = trajectory_name  # Store the trajectory type
 
                 # Add error column
                 if aspect.reprojection_error is None:
@@ -198,7 +198,7 @@ class Actor(ABC):
         big_df = pd.concat(all_data, ignore_index=True)
 
         # Sort by frame, model, and type
-        big_df = big_df.sort_values(by=['frame', 'model', 'type']).reset_index(drop=True)
+        big_df = big_df.sort_values(by=['frame', 'model', 'trajectory']).reset_index(drop=True)
 
         return big_df
     
@@ -216,13 +216,16 @@ class Actor(ABC):
 
         return df
 
-    def save_out_numpy_data(self, path_to_output_folder: Optional[Path] = None):
+    def _set_output_folder(self, path_to_output_folder: Path|str|None):
+        path_to_output_folder = Path.cwd() if path_to_output_folder is None else Path(path_to_output_folder)
+        return path_to_output_folder
+
+    def save_out_numpy_data(self, path_to_output_folder: Path|str|None):
         """
         Saves out a .npy file for each Trajectory in each Aspect with format {tracker_name}_{aspect}_{trajectory} 
         (i.e. 'mediapipe_body_3d_xyz')
         """
-        if path_to_output_folder is None:
-            path_to_output_folder = Path.cwd()
+        path_to_output_folder = self._set_output_folder(path_to_output_folder)
 
         for aspect in self.aspects.values():
             for trajectory in aspect.trajectories.values():
@@ -231,37 +234,35 @@ class Actor(ABC):
                         trajectory.as_array) 
                 logger.info(f"Saved out {save_path}")
 
-    def save_out_csv_data(self, path_to_output_folder: Optional[Path] = None):
+    def save_out_csv_data(self, path_to_output_folder: Path|str|None):
         """
         Saves out a .csv file for each Trajectory in each Aspect with format {tracker_name}_{aspect}_{trajectory} 
         (i.e. 'mediapipe_body_3d_xyz')
         """
-        if path_to_output_folder is None:
-            path_to_output_folder = Path.cwd()
+        path_to_output_folder = self._set_output_folder(path_to_output_folder)
 
         for aspect in self.aspects.values():
             for trajectory in aspect.trajectories.values():
                 save_path = path_to_output_folder / f"{aspect.metadata['tracker_type']}_{aspect.name}_{trajectory.name}.csv"
-                trajectory.as_dataframe.to_csv(path_to_output_folder/f"{aspect.metadata['tracker_type']}_{aspect.name}_{trajectory.name}.csv")
+                trajectory.as_dataframe.to_csv(path_to_output_folder/f"{aspect.metadata['tracker_type']}_{aspect.name}_{trajectory.name}.csv", index = False)
                 logger.info(f"Saved out {save_path}") 
 
-    def save_out_all_data_csv(self, path_to_output_folder: Optional[Path] = None):
+    def save_out_all_data_csv(self, path_to_output_folder: Path|str|None):
         """
         Saves out a CSV in tidy format with all Trajectories from all Aspects
         """
-        if path_to_output_folder is None:
-            path_to_output_folder = Path.cwd()
+        path_to_output_folder = self._set_output_folder(path_to_output_folder)
+
         save_path = path_to_output_folder / 'freemocap_data_by_frame.csv'    
         self.create_summary_dataframe().to_csv(save_path, index=False)
         logger.info(f"Data successfully saved to {save_path}")
 
-    def save_out_all_data_parquet(self, path_to_output_folder: Optional[Path] = None):
+    def save_out_all_data_parquet(self, path_to_output_folder: Path|str|None):
         """
         Saves out a Parquet file using the same dataframe created in `create_summary_dataframe` and 
         adds additional metadata to the file.
         """
-        if path_to_output_folder is None:
-            path_to_output_folder = Path.cwd()
+        path_to_output_folder = self._set_output_folder(path_to_output_folder)
 
         dataframe = self.create_summary_dataframe_with_metadata()
         save_path = path_to_output_folder / FREEMOCAP_PARQUET_NAME
@@ -283,7 +284,7 @@ class Actor(ABC):
             tracker_name, aspect_name = model_name.split(".")
             trajectory_dict: dict[str, Trajectory] = {}
 
-            for trajectory_name, trajectory_data in aspect_data.groupby('type'):
+            for trajectory_name, trajectory_data in aspect_data.groupby('trajectory'):
                 marker_order = trajectory_data["keypoint"].drop_duplicates().tolist()
 
                 num_markers = len(marker_order)
