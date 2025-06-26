@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 from skellymodels.managers.actor import Actor
-from skellymodels.utils.create_mediapipe_actor import create_aspects_for_mediapipe_human, split_data
+from skellymodels.create_mediapipe_actor import create_aspects_for_mediapipe_human, split_data
 from skellymodels.models import Aspect
 from skellymodels.builders.anatomical_structure_builder import AnatomicalStructureBuilder
 
@@ -120,7 +120,7 @@ for aspect in human.aspects.values():
 
         aspect.add_trajectory(name = 'rigid_3d_xyz',
                                 data = rigid_bones,
-                                marker_names = aspect.anatomical_structure.marker_names)
+                                marker_names = aspect.anatomical_structure.landmark_names)
     else:
         print('Skipping rigid bones enforcement for aspect:', aspect.name)
 pprint([human.aspects.values()])

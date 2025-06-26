@@ -2,7 +2,7 @@ from pathlib import Path
 import numpy as np
 from skellymodels.managers.human import Human
 from pprint import pprint
-from skellymodels.tracker_info.model_info import MediapipeModelInfo
+from skellymodels.models.tracking_model_info import MediapipeModelInfo
 
 
 model_info = MediapipeModelInfo()

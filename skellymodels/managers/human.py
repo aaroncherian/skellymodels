@@ -1,142 +1,135 @@
 from enum import Enum
 import numpy as np
-
 from skellymodels.models.aspect import Aspect
-from skellymodels.managers.actor import Actor
-from skellymodels.tracker_info.model_info import ModelInfo
+from skellymodels.managers.animal import Animal
+from skellymodels.models.tracking_model_info import ModelInfo
 class HumanAspectNames(Enum):
     BODY = "body"
     FACE = "face"
     LEFT_HAND = "left_hand"
     RIGHT_HAND = "right_hand"
 
+HUMAN_ENUMS = (HumanAspectNames.FACE,
+                HumanAspectNames.LEFT_HAND,
+                HumanAspectNames.RIGHT_HAND)
 
-class Human(Actor):
+class Human(Animal):
+    """
+    Specialized Actor class representing a tracked human subject.
+
+    In addition to the 'body' aspect defined in the 'Animal' base class,
+    this class adds support for 'face', 'left_hand', and 'right_hand' aspects,
+    depending on the configuration in the provided 'ModelInfo'
+
+    Parameters
+    ----------
+    name : str
+        Identifier for the human actor (e.g., subject ID, session name).
+    model_info : ModelInfo
+        Configuration describing marker layout and aspect slicing
+        from the full tracker output.
+
+    Attributes
+    ----------
+    face : Aspect or None
+        Face aspect if present in the model config.
+    left_hand : Aspect or None
+        Left hand aspect if present in the model config.
+    right_hand : Aspect or None
+        Right hand aspect if present in the model config.        
+    """
     def __init__(self, name: str, model_info:ModelInfo):
-        super().__init__(name)
-        
-        self.tracker = model_info.name
-        self.aspect_order = model_info.order
-        self.tracked_point_slices = model_info.tracked_point_slices
-        self.landmark_slices = model_info.landmark_slices
-        self.model_info = model_info
-        
+        super().__init__(name, model_info)
+    
         self._initialize_aspects()
 
     def _initialize_aspects(self):
         """
-        Initializes the predefined anatomical aspects (body, face, hands) for the Human instance.
-        Aspects are added based on the configuration provided in the ModelInfo instance.
+        Initializes the anatomical aspects defined in `HUMAN_ENUMS`,
+        adding them if they exist in the current `aspect_order`.
         """
-        self._add_body()
 
-        if HumanAspectNames.FACE.value in self.aspect_order:
-            self._add_face()
-
-        if HumanAspectNames.LEFT_HAND.value in self.aspect_order:
-            self._add_left_hand()
-        
-        if HumanAspectNames.RIGHT_HAND.value in self.aspect_order:
-            self._add_right_hand()
-
-    def _add_body(self):
-        body = Aspect.from_model_info(
-            name = HumanAspectNames.BODY.value,
-            model_info = self.model_info,
-            metadata = {"tracker_type": self.tracker}
-        )
-        self.add_aspect(body)
+        for aspect_enum in HUMAN_ENUMS:
+            if aspect_enum.value in self.aspect_order:
+                self.aspect_from_model_info(
+                    name = aspect_enum.value
+                )
     
-    def _add_face(self):
-        face = Aspect.from_model_info(
-            name = HumanAspectNames.FACE.value,
-            model_info = self.model_info,
-            metadata = {"tracker_type": self.tracker}
-        )
-        self.add_aspect(face)
-
-    def _add_left_hand(self):
-        left_hand = Aspect.from_model_info(
-            name = HumanAspectNames.LEFT_HAND.value,
-            model_info = self.model_info,
-            metadata = {"tracker_type": self.tracker}
-        )
-        self.add_aspect(left_hand)
-
-    def _add_right_hand(self):
-        right_hand = Aspect.from_model_info(
-            name = HumanAspectNames.RIGHT_HAND.value,
-            model_info = self.model_info,
-            metadata = {"tracker_type": self.tracker}
-        )
-        self.add_aspect(right_hand)
-
     @property
-    def body(self):
-        return self.aspects[HumanAspectNames.BODY.value]
-    @property
-    def face(self):
+    def face(self) -> Aspect|None:
+        """
+        Returns the face aspect, if available.
+
+        Returns
+        -------
+        Aspect or None
+        """
         return self.aspects.get(HumanAspectNames.FACE.value)
+    
     @property
-    def left_hand(self):
+    def left_hand(self) -> Aspect|None:
+        """
+        Returns the left hand aspect, if available.
+
+        Returns
+        -------
+        Aspect or None
+        """
         return self.aspects.get(HumanAspectNames.LEFT_HAND.value)
+    
     @property
-    def right_hand(self):
+    def right_hand(self) -> Aspect|None:
+        """
+        Returns the right hand aspect, if available.
+
+        Returns
+        -------
+        Aspect or None
+        """
         return self.aspects.get(HumanAspectNames.RIGHT_HAND.value)
     
     def add_tracked_points_numpy(self, tracked_points_numpy_array:np.ndarray):
         """
-        Takes in the tracked points array, splits and categorizes it based on the ranges determined by the ModelInfo,
-        and adds it as a tracked point Trajectory to the body, and optionally face/hands aspects 
+        Splits the full tracked point array into aspects and adds each
+        subset to its respective Aspect object.
+
+        The `body` data is handled by the superclass (`Animal`), and
+        this method additionally processes face and hand aspects if
+        defined in the model.
+
+        Parameters
+        ----------
+        tracked_points_numpy_array : ndarray of shape (F, M, 3)
+            Full 3D marker array from the tracker.
         """
 
-        self.body.add_tracked_points(tracked_points_numpy_array[:,self.tracked_point_slices[HumanAspectNames.BODY.value],:])
+        super().add_tracked_points_numpy(tracked_points_numpy_array)
 
-        if HumanAspectNames.FACE.value in self.tracked_point_slices and self.face is not None:
-            self.face.add_tracked_points(
-                tracked_points_numpy_array[:,self.tracked_point_slices[HumanAspectNames.FACE.value],:]
-                )
+        for aspect_enum in HUMAN_ENUMS:
             
-        if HumanAspectNames.LEFT_HAND.value in self.tracked_point_slices and self.left_hand is not None:
-            self.left_hand.add_tracked_points(
-                tracked_points_numpy_array[:,self.tracked_point_slices[HumanAspectNames.LEFT_HAND.value],:]
-                )
-        
-        if HumanAspectNames.RIGHT_HAND.value in self.tracked_point_slices and self.right_hand is not None:
-            self.right_hand.add_tracked_points(
-                tracked_points_numpy_array[:,self.tracked_point_slices[HumanAspectNames.RIGHT_HAND.value],:]
-                )
-        
-    def add_landmarks_numpy_array(self, landmarks_numpy_array:np.ndarray):
-        """
-        Takes in landmark data, splits and categorizes it based on the ranges determined by the ModelInfo,
-        and adds it as a tracked point Trajectory to the body, and optionally face/hands aspects 
-        """
-        self.body.add_landmarks(landmarks_numpy_array[:,self.landmark_slices[HumanAspectNames.BODY.value],:])
-
-        if HumanAspectNames.FACE.value in self.landmark_slices and self.face is not None:
-            self.face.add_landmarks(
-                landmarks_numpy_array[:,self.landmark_slices[HumanAspectNames.FACE.value],:]
-                )
-        
-        if HumanAspectNames.LEFT_HAND.value in self.landmark_slices and self.left_hand is not None:
-            self.left_hand.add_landmarks(
-                landmarks_numpy_array[:,self.landmark_slices[HumanAspectNames.LEFT_HAND.value],:]
-                )
-
-        if HumanAspectNames.RIGHT_HAND.value in self.landmark_slices and self.right_hand is not None:
-            self.right_hand.add_landmarks(
-                landmarks_numpy_array[:,self.landmark_slices[HumanAspectNames.RIGHT_HAND.value],:]
+            aspect = self.aspects.get(aspect_enum.value)
+            if aspect_enum.value in self.tracked_point_slices and aspect:
+                aspect.add_tracked_points(
+                    tracked_points_numpy_array[:, self.tracked_point_slices[aspect_enum.value],:]
                 )
 
     def add_reprojection_error_numpy(self, reprojection_error_data: np.ndarray):
-        self.body.add_reprojection_error(reprojection_error_data[:, self.tracked_point_slices[HumanAspectNames.BODY.value]])
+        """
+        Adds per-marker reprojection error data to each aspect, if available.
 
-        if HumanAspectNames.FACE.value in self.tracked_point_slices and self.face is not None:
-            self.face.add_reprojection_error(reprojection_error_data[:, self.tracked_point_slices[HumanAspectNames.FACE.value]])
+        The `body` errors are handled by the superclass (`Animal`), and
+        this method additionally processes face and hand aspects.
         
-        if HumanAspectNames.LEFT_HAND.value in self.tracked_point_slices and self.left_hand is not None:
-            self.left_hand.add_reprojection_error(reprojection_error_data[:, self.tracked_point_slices[HumanAspectNames.LEFT_HAND.value]])
-        
-        if HumanAspectNames.RIGHT_HAND.value in self.tracked_point_slices and self.right_hand is not None:
-            self.right_hand.add_reprojection_error(reprojection_error_data[:, self.tracked_point_slices[HumanAspectNames.RIGHT_HAND.value]])
+        Parameters
+        ----------
+        reprojection_error_data : ndarray of shape (F, M)
+            2D array of reprojectio
+        """
+        super().add_reprojection_error_numpy(reprojection_error_data)
+
+        for aspect_enum in HUMAN_ENUMS:
+            aspect = self.aspects.get(aspect_enum.value)
+            if aspect_enum.value in self.tracked_point_slices and aspect:
+                aspect.add_reprojection_error(
+                    reprojection_error_data[:, self.tracked_point_slices[aspect_enum.value]]
+                )
