@@ -1,8 +1,10 @@
 from enum import Enum
 import numpy as np
-from skellymodels.models.aspect import Aspect
+from skellymodels.models.aspect import Aspect, TrajectoryNames
+from skellymodels.models.trajectory import Trajectory
 from skellymodels.managers.animal import Animal
 from skellymodels.models.tracking_model_info import ModelInfo
+import logging
 class HumanAspectNames(Enum):
     BODY = "body"
     FACE = "face"
@@ -12,6 +14,8 @@ class HumanAspectNames(Enum):
 HUMAN_ENUMS = (HumanAspectNames.FACE,
                 HumanAspectNames.LEFT_HAND,
                 HumanAspectNames.RIGHT_HAND)
+
+logger = logging.getLogger(__name__)
 
 class Human(Animal):
     """
@@ -133,3 +137,46 @@ class Human(Animal):
                 aspect.add_reprojection_error(
                     reprojection_error_data[:, self.tracked_point_slices[aspect_enum.value]]
                 )
+
+    def fix_hands_to_wrist(self):
+        if not self.left_hand or not self.right_hand:
+            logger.warning('No hands aspects found - cannot fix hands to wrist')
+            return None
+
+        missing = []
+
+        if not any('wrist' in marker for marker in self.body.anatomical_structure.landmark_names):
+            missing.append(self.body.name)
+        
+        if not any('wrist' in marker for marker in self.left_hand.anatomical_structure.landmark_names):
+            missing.append(self.left_hand.name)
+
+        if not any('wrist' in marker for marker in self.right_hand.anatomical_structure.landmark_names):
+            missing.append(self.right_hand.name)
+            
+        if missing:
+            logger.warning(f"Wrist markers missing from {missing}. Cannot fix hands to wrist")  
+            return None
+
+        for side in ['left', 'right']:
+            hand_aspect = self.aspects[f'{side}_hand']
+            hand_wrist = hand_aspect.xyz.as_dict['wrist']
+            body_wrist = (self.body.rigid_xyz or self.body.xyz).as_dict[f'{side}_wrist']
+
+            
+            position_delta = body_wrist - hand_wrist
+            position_delta = np.expand_dims(position_delta, 1)
+            translated_array = hand_aspect.xyz.as_array + position_delta
+
+            translated_trajectory = Trajectory(
+                name = hand_aspect.name,
+                array = translated_array,
+                landmark_names= hand_aspect.anatomical_structure.landmark_names
+            )
+
+            hand_aspect.add_trajectory({
+                TrajectoryNames.XYZ.value: translated_trajectory
+            })
+
+
+        f = 2
