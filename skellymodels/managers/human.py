@@ -181,8 +181,6 @@ class Human(Animal):
             })
 
     def put_skeleton_on_ground(self):
-        import matplotlib.pyplot as plt
-        from mpl_toolkits.mplot3d import Axes3D 
         
         def get_unit_vector(vector: np.ndarray) -> np.ndarray:
             return vector / np.linalg.norm(vector)
@@ -201,97 +199,19 @@ class Human(Animal):
         center = np.mean(foot_trajectories[still_frame], axis = 0)
 
         mid_foot_index =  (self.body.xyz.as_dict['right_foot_index'][still_frame] + self.body.xyz.as_dict['left_foot_index'][still_frame])/2
-        mid_right_foot = (self.body.xyz.as_dict['right_heel'][still_frame] + self.body.xyz.as_dict['right_foot_index'][still_frame])/2
+        # mid_right_foot = (self.body.xyz.as_dict['right_heel'][still_frame] + self.body.xyz.as_dict['right_foot_index'][still_frame])/2
 
         forward = get_unit_vector(mid_foot_index - center)
-        left = get_unit_vector(mid_right_foot - center)    
+        # left = get_unit_vector(mid_right_foot - center)    
         up = get_unit_vector(self.body.xyz.as_dict['neck_center'][still_frame] - center)
-
-        # y_hat = get_unit_vector(np.cross(up, left))
-        # x_hat = get_unit_vector(np.cross(y_hat,up))
-        # z_hat = get_unit_vector(np.cross(x_hat, y_hat))
-
-        # z_hat = get_unit_vector(np.cross(left, forward))
-        # y_hat = get_unit_vector(np.cross(z_hat, left))
-        # x_hat = get_unit_vector(np.cross(y_hat, z_hat))
 
         x_hat = get_unit_vector(np.cross(forward,up))
         y_hat = get_unit_vector(np.cross(up,x_hat))
         z_hat = get_unit_vector(np.cross(x_hat, y_hat))
-
-
-        debug = True
-
-
-        if debug:
-            fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
-            xyz = self.body.xyz.as_array[still_frame]
-            xs, ys, zs = xyz[:, 0], xyz[:, 1], xyz[:, 2]
-            ax.scatter(xs, ys, zs)
-
-            origin = center
-            vector_scale = np.linalg.norm(self.body.xyz.as_array[still_frame].ptp(axis=0)) * 0.05
-
-            def draw_vector(origin, direction, color, label):
-                ax.quiver(*origin, *(direction)*500, color=color, label=label)
-
-            draw_vector(origin, forward, 'r', 'forward (y)')
-            draw_vector(origin, left, 'b', 'x')
-            # draw_vector(origin, z, 'g', 'z_hat')
-            draw_vector(origin, up, 'g', 'z')
-            draw_vector(origin, x_hat, 'lightblue', 'xhat')
-            draw_vector(origin, y_hat, 'pink', 'yhat')
-            draw_vector(origin, z_hat, 'lightgreen', 'zhat')
-
-            ax.set_title("Debug: Foot Orientation Axes at Still Frame")
-            ax.set_xlabel("X")
-            ax.set_ylabel("Y")
-            ax.set_zlabel("Z")
-            ax.legend()
-            ax.set_box_aspect([1, 1, 0.5])
-            plt.tight_layout()
-            plt.show()
         
-
         skeleton_basis = np.column_stack([x_hat, y_hat, z_hat])
-        target_x = np.array([1, 0, 0])  # Negative because heel vector points left
-        target_y = np.array([0, 1, 0])
-        target_z = np.array([0, 0, 1])
-        target_basis = np.column_stack([target_x, target_y, target_z])
-        rotation_matrix = target_basis @ skeleton_basis.T
-
-        # rotation_matrix = np.column_stack([x_hat, y_hat, z_hat])
-
+        rotation_matrix = np.eye(3) @ skeleton_basis.T
         translation_delta = 0 - center
-
-        if debug:
-            fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
-
-            ax.scatter(*self.body.xyz.as_dict['left_heel'][still_frame], color='blue', label='left_heel')
-            ax.scatter(*self.body.xyz.as_dict['right_heel'][still_frame], color='cyan', label='right_heel')
-            ax.scatter(*self.body.xyz.as_dict['left_foot_index'][still_frame], color='green', label='left_foot_index')
-            ax.scatter(*self.body.xyz.as_dict['right_foot_index'][still_frame], color='lime', label='right_foot_index')
-
-            origin = self.body.xyz.as_dict['left_heel'][still_frame]
-            vector_scale = np.linalg.norm(self.body.xyz.as_array[still_frame].ptp(axis=0)) * 0.05
-
-            def draw_vector(origin, direction, color, label):
-                ax.quiver(*origin, *(direction * vector_scale), color=color, label=label)
-
-            draw_vector(origin, y_hat, 'r', 'forward (y)')
-            draw_vector(origin, x_hat, 'b', 'x_hat')
-            draw_vector(origin, z_hat, 'g', 'z_hat')
-
-            ax.set_title("Debug: Foot Orientation Axes at Still Frame")
-            ax.set_xlabel("X")
-            ax.set_ylabel("Y")
-            ax.set_zlabel("Z")
-            ax.legend()
-            ax.set_box_aspect([1, 1, 0.5])
-            plt.tight_layout()
-            plt.show()
 
         for aspect_name, aspect in self.aspects.items():
             transformed_trajectory = (aspect.xyz.as_array + translation_delta)@rotation_matrix.T
