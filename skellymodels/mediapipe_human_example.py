@@ -16,6 +16,7 @@ recording_path = Path(r"D:\2025-04-23_atc_testing\freemocap\2025-04-23_19-11-05-
 output_data_path = recording_path/'output_data'
 ## Choose a path to the directory 
 path_to_data = output_data_path/'raw_data'/'mediapipe_3dData_numFrames_numTrackedPoints_spatialXYZ.npy'
+# path_to_data = output_data_path/'mediapipe_skeleton_3d.npy'
 data = np.load(path_to_data)
 
 # # Create an Actor
@@ -24,7 +25,9 @@ data = np.load(path_to_data)
 #             model_info=model_info
 #             )
 
-human = Human.from_tracked_points_numpy_array(name = "human_one ",tracked_points_numpy_array=data, model_info=model_info)
+human = Human.from_tracked_points_numpy_array(name = "human_one", 
+                                              tracked_points_numpy_array=data, 
+                                              model_info=model_info)
 
 # human:Human = Human.from_data(path_to_data_folder= output_data_path)
 
