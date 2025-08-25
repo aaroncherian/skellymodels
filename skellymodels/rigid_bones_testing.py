@@ -2,7 +2,7 @@ from pathlib import Path
 import numpy as np
 from typing import Dict
 from skellymodels.managers.human import Human
-from skellymodels.tracker_info.model_info import MediapipeModelInfo
+from skellymodels.models.tracking_model_info import MediapipeModelInfo
 
 
 def create_segment_data(

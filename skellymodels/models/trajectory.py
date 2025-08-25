@@ -2,158 +2,199 @@ from pydantic import BaseModel, ConfigDict, model_validator
 import numpy as np
 import pandas as pd
 from typing import Dict, List
-from skellymodels.utils.types import MarkerName, SegmentName, VirtualMarkerDefinition, SegmentConnection
+from skellymodels.utils.types import MarkerName, SegmentName, SegmentConnection
+from skellymodels.models.anatomical_structure import AnatomicalStructure
+import warnings
+class Trajectory(BaseModel):
+    """
+    A Trajectory stores 3D data for a given anatomical component
+    (e.g., body, face, hand) as a NumPy array of shape (num_frames, num_markers, 3).
 
-class TrajectoryValidator(BaseModel):
+    It includes utilities for dictionary and DataFrame views of the data,
+    and supports the inclusion of virtual markers at construction time.
+
+    Parameters
+    ----------
+    name : str
+        Identifier for the trajectory (e.g., "3d_xyz", "rigid_3d_xyz").
+    array : np.ndarray, shape (num_frames, num_markers, 3)
+        Main data array containing 3D positions for all markers across frames.
+    landmark_names : list of str
+        Ordered list of marker names corresponding to the columns in the array.
+
+    Notes
+    -----
+    Validation ensures that the number of landmark names matches the number
+    of markers in the second dimension of the array, and that the last dimension
+    is exactly 3 (for xyz).
+    """
+    name: str
+    array: np.ndarray
+    landmark_names: List[MarkerName]
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    data:np.ndarray
-    marker_names: List[str]
 
-    @model_validator(mode="after")
-    def validate_data(self):
-        if self.data.shape[1] != len(self.marker_names):
-            raise ValueError(f"Trajectory data must have the same number of markers as input name list. Data has shape {self.data.shape} and list has {len(self.marker_names)} markers.")
+    @classmethod
+    def from_tracked_points_data(cls, 
+                                 name:str,
+                                tracked_points_array:np.ndarray, 
+                                anatomical_structure:AnatomicalStructure) -> "Trajectory":
+        """
+        Factory method to create a Trajectory from tracked points and
+        a corresponding AnatomicalStructure.
 
+        This method optionally computes virtual markers based on weighted
+        combinations of real markers as defined in the anatomical structure.
+
+        Parameters
+        ----------
+        name : str
+            Name of the trajectory (e.g. '3d_xyz').
+        tracked_points_array : ndarray of shape (num_frames, num_markers, 3)
+            Raw array of real marker positions.
+        anatomical_structure : AnatomicalStructure
+            Provides marker names and virtual marker definitions.
+
+        Returns
+        -------
+        Trajectory
+            A new trajectory instance with virtual markers (if defined).
+        """
+        landmark_names = anatomical_structure.tracked_point_names.copy()
+        vm_defs = anatomical_structure.virtual_markers_definitions
+        
+        output_array_as_list: list[np.ndarray] = [tracked_points_array]
+        #compute virtual markers
+        if vm_defs:
+            for vm_name, vm_components in vm_defs.items():
+                component_names = vm_components["marker_names"]
+                component_weights = vm_components["marker_weights"]
+
+                component_indices = [anatomical_structure.tracked_point_names.index(name) for name in component_names]
+                component_data = tracked_points_array[:,component_indices,:]
+                component_weights = np.array(component_weights)[None, :, None]
+                weighted_marker_data = component_data * component_weights
+                virtual_marker = np.sum(weighted_marker_data, axis = 1)
+                output_array_as_list.append(virtual_marker[:, None, :])
+                landmark_names.append(vm_name) 
+
+        output_array = np.concatenate(output_array_as_list, axis=1) if len(output_array_as_list) > 1 else tracked_points_array
     
+        return cls(name = name, 
+                   array = output_array,
+                   landmark_names = landmark_names)
+    
+    @model_validator(mode="after")
+    def _check_shape(self):
+        """
+        Post-initialization shape validation.
 
-class Trajectory:
-    """
-    A container for 3D motion capture trajectory data that handles both tracked markers 
-    and derived virtual markers.
+        Raises
+        ------
+        ValueError
+            If shape mismatches between landmark_names and the data array,
+            or if the last dimension is not 3.
+        """
+        if self.array.shape[1] != len(self.landmark_names):
+            raise ValueError(
+                f"{self.name}: data has {self.array.shape[1]} columns but "
+                f"{len(self.landmark_names)} marker names supplied"
+            )
+        if self.array.shape[2] != 3:
+            raise ValueError(f"{self.name}: last dim must be 3 (xyz)")
+        return self
 
-    The Trajectory class manages time-series 3D position data for a set of markers, supporting
-    both directly tracked markers and calculated virtual markers. It provides methods to access
-    the data in various formats (dictionary, numpy array, pandas DataFrame) and can compute
-    virtual marker positions based on weighted combinations of tracked markers.
+    @property
+    def as_array(self) -> np.ndarray:
+        """
+        Returns NumPy array 
 
-    Attributes:
-        name (str): Identifier for this trajectory set
-        _trajectories (Dict[str, np.ndarray]): Dictionary mapping marker names to their position data
-            over time with shape (num_frames, 3)
-        _tracked_point_names (List[str]): Names of the all tracked points (need to firm up some of these naming conventions)
-         _marker_names (List[str]): Names of all markers (tracked + virtual) (repeated note about firming up naming conventions)
-        _virtual_marker_definitions (Optional[Dict]): Definitions for calculating virtual markers
-            from tracked markers using weighted combinations
-        _segment_connections (Optional[Dict]): Definitions of segments connecting pairs of markers
-        _num_frames (int): Total number of frames in the trajectory data
+        Returns
+        ------
+        np.ndarray
+            Shape (num_frames, num_markers, 3)
+        """
+        return self.array
+    
+    @property
+    def as_dict(self) -> dict[MarkerName, np.ndarray]:
+        """
+        Returns the marker data as a dictionary mapping names to arrays.
 
-    """
+        Returns
+        -------
+        dict
+            Keys are marker names, values are arrays of shape (num_frames, 3)
+        """
+        return {n: self.array[:, i, :]
+            for i, n in enumerate(self.landmark_names)
+            }
 
-    def __init__(self, name: str, 
-                 data: np.ndarray, 
-                 marker_names: List[MarkerName], 
-                 virtual_marker_definitions: Dict[str, VirtualMarkerDefinition] | None = None, 
-                 segment_connections: Dict[SegmentName, SegmentConnection] | None = None):
-        self.name = name
-        self._trajectories = {}
-        self._tracked_point_names = marker_names
-        self._virtual_marker_definitions = virtual_marker_definitions
-        self._segment_connections = segment_connections
-        self._validate_data(data=data, marker_names=self._tracked_point_names)
-        self._set_trajectory_data(data=data, marker_names=self._tracked_point_names, virtual_marker_definitions=virtual_marker_definitions)
-        self._num_frames = data.shape[0]
+    @property
+    def as_dataframe(self) -> pd.DataFrame:
+        """
+        Returns the data in tidy long-form format.
 
-    def _validate_data(self, data: np.ndarray, marker_names: List[str]):
-        TrajectoryValidator(data=data, marker_names= marker_names)
+        Returns
+        -------
+        DataFrame
+            Columns: ["frame", "keypoint", "x", "y", "z"]
+        """
 
-    def _set_trajectory_data(self, data:np.ndarray, marker_names:List[str], virtual_marker_definitions: Dict = None):
-        self._trajectories.update({marker_name: data[:, i, :] for i, marker_name in enumerate(marker_names)})
-        self._marker_names = marker_names.copy()
+        df = pd.DataFrame(
+            self.array.reshape(self.num_frames*self.num_markers,3),
+            columns=['x','y','z'],
+        )
         
-        if virtual_marker_definitions:
-            print(f'Calculating virtual markers: {list(virtual_marker_definitions.keys())}')
-            virtual_marker_data = {}
-            for vm_name, vm_info in virtual_marker_definitions.items():
-                vm_positions = np.zeros((data.shape[0], 3))
-                for marker_name, weight in zip(vm_info["marker_names"], vm_info["marker_weights"]):
-                    vm_positions += self._trajectories[marker_name] * weight
-                virtual_marker_data[vm_name] = vm_positions
-            
-            self._marker_names += list(virtual_marker_data.keys())
-            self._trajectories.update(virtual_marker_data)
-
+        df['frame'] = np.repeat(np.arange(self.num_frames),self.num_markers)
+        df['keypoint'] = np.tile(self.landmark_names, self.num_frames)
+        return df[['frame', 'keypoint', 'x', 'y', 'z']]
+         
     @property
-    def landmark_names(self):
-        return self._marker_names
-
+    def num_frames(self) -> int:
+        """Total number of frames in the trajectory."""
+        return self.array.shape[0]
+    
     @property
-    def data(self):  # TODO: elsewhere this is used for the numpy array, but here its a dictionary 
-        return self._trajectories
+    def num_markers(self) -> int:
+        """Total number of markers (columns) in the trajectory."""
+        return self.array.shape[1]
+    
+    def segment_data(self, segment_connections:Dict[SegmentName, SegmentConnection]) -> Dict[SegmentName, Dict[str, np.ndarray]]:
+        """
+        Returns a dictionary of proximal/distal points for each segment.
 
-    @property
-    def landmark_data(self):
-        return {landmark_name:trajectory for landmark_name, trajectory in self._trajectories.items() if landmark_name in self._tracked_point_names}
+        Parameters
+        ----------
+        segment_connections : dict
+            Each entry should define 'proximal' and 'distal' marker names.
 
-    @property
-    def virtual_marker_data(self):
-        if not self._virtual_marker_definitions:
+        Returns
+        -------
+        dict
+            Keys are segment names; values are dictionaries with keys
+            'proximal' and 'distal', each mapping to an array of shape (F, 3).
+        """
+        if not segment_connections:
             return {}
-        return {marker_name:trajectory for marker_name, trajectory in self._trajectories.items() if marker_name in self._virtual_marker_definitions.keys()}
-
-    @property
-    def segment_data(self) -> Dict[str, Dict[str, np.ndarray]]:
-        if not self._segment_connections:
-            return {}
-        
+        d = self.as_dict
         segment_positions = {}
-        for name, connection in self._segment_connections.items():
-            proximal = self._trajectories.get(connection["proximal"])
-            distal = self._trajectories.get(connection["distal"])
+        for name, connection in segment_connections.items():
+            proximal = d.get(connection["proximal"])
+            distal = d.get(connection["distal"])
 
             segment_positions.update({name: {'proximal': proximal, 'distal': distal}})
 
         return segment_positions
     
     @property
-    def tracked_point_names(self):
-        """The original tracked point names excluding virtual markers"""
-        return self._tracked_point_names
+    def data(self): #this is for me to figure out where I use this in my validation pipeline. Will remove this after that.
+        warnings.warn(".data is deprecated - use .as_dict for the same output",
+                      DeprecationWarning,
+                      stacklevel=2)  # TODO: elsewhere this is used for the numpy array, but here its a dictionary 
+        return self.as_dict
     
-    @property
-    def num_frames(self):
-        return self._num_frames
-    
-    @property
-    def as_numpy(self):
-        numpy_data = np.full((self._num_frames, len(self._marker_names), 3), np.nan)
-
-        for marker_idx, marker_name in enumerate(self._marker_names):
-            if marker_name in self._trajectories:
-                numpy_data[:, marker_idx, :] = self._trajectories[marker_name]
-
-        return numpy_data
-    
-    @property
-    def as_dataframe(self):
-        tidy_data = []
-
-        for frame_number in range(self._num_frames):
-            frame_data = self.get_frame(frame_number)
-            for marker_name, marker_3d_position in frame_data.items():
-                
-                x, y, z = marker_3d_position
-
-                tidy_data.append({
-                    "frame": frame_number,
-                    "keypoint": marker_name,
-                    "x": x,
-                    "y": y,
-                    "z": z
-                })
-
-        return pd.DataFrame(tidy_data)        
-
-
-    def get_marker(self, marker_name: str):
-        return self._trajectories[marker_name]
-
-    def get_frame(self, frame_number: int):
-        return {marker_name: trajectory[frame_number] for marker_name, trajectory in self._trajectories.items()}
-
     def __str__(self) -> str:
-
-        return f"Trajectory with {self._num_frames} frames and {len(self._marker_names)} markers"
+        return f"Trajectory with {self.num_frames} frames and {len(self.landmark_names)} markers"
 
     def __repr__(self) -> str:
         return self.__str__()
-
