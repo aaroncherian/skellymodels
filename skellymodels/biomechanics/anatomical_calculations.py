@@ -26,8 +26,8 @@ class CenterOfMassCalculation(AnatomicalCalculation):
                 messages=[f'No COM definitions for aspect: {aspect.name}, skipping COM calculation']
             )
 
-        trajectory = aspect.xyz #NOTE: maybe put this in a try/except loop where the except also returns a CalcResult? with success=False
-
+        trajectory = aspect.rigid_xyz or aspect.xyz #NOTE: maybe put this in a try/except loop where the except also returns a CalcResult? with success=False
+        
         total_body_com, segment_com = calculate_center_of_mass(
             segment_positions=trajectory.segment_data(aspect.anatomical_structure.segment_connections),
             center_of_mass_definitions=aspect.anatomical_structure.center_of_mass_definitions,
