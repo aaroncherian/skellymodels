@@ -3,11 +3,12 @@ import numpy as np
 from skellymodels.managers.human import Human
 from skellymodels.models.tracking_model_info import MediapipeModelInfo
 
-path_to_recording = Path(r"D:\2023-06-07_TF01\1.0_recordings\treadmill_calib\sesh_2023-06-07_12_06_15_TF01_flexion_neutral_trial_1")
+path_to_recording = Path(r"D:\2023-06-07_TF01\1.0_recordings\four_camera\sesh_2023-06-07_12_06_15_TF01_flexion_neutral_trial_1")
 
 path_to_data = path_to_recording/'validation'/'qualisys'/'freemocap_data_by_frame.parquet'
 
-path_to_freemocap_parquet = path_to_recording/'validation'/'mediapipe'/'freemocap_data_by_frame.parquet'
+path_to_freemocap_parquet = path_to_recording/'output_data'/'mediapipe_dlc'/'freemocap_data_by_frame.parquet'
+# path_to_freemocap_parquet = path_to_recording/'output_data'/'mediapipe_dlc'/'freemocap_data_by_frame.parquet'
 # path_to_data = path_to_recording/'output_data'/'mediapipe_dlc'/'freemocap_data_by_frame.parquet'
 
 # data = np.load(path_to_data)
@@ -113,7 +114,6 @@ foot_y_norm = foot_y / np.linalg.norm(foot_y, axis=1, keepdims=True)
 
 R_foot = np.zeros((data.shape[0], 3, 3))
 ankle_angles = np.zeros((data.shape[0], 3))  # Z-X-Y sequence
-
 # shank_vector_sagittal = shank_vector.copy()
 
 for i in range(data.shape[0]):
@@ -126,6 +126,9 @@ for i in range(data.shape[0]):
     theta_z = np.arctan2(R_relative[2, 0], R_relative[2, 2])
 
     ankle_angles[i] = np.rad2deg([theta_z, theta_x, theta_y])
+
+np.save(path_to_freemocap_parquet.parent / "ankle_flexion_angles.npy", ankle_angles)
+
 
 def _norm(v):
     n = np.linalg.norm(v, axis=1, keepdims=True)
@@ -170,14 +173,17 @@ def load_mot(path: Path, n_header: int) -> pd.DataFrame:
 
 fmc_blender_path = path_to_recording / "sweep_angles_all.csv"
 qual_path = path_to_recording / "validation" / "qualisys" / "qualisys_ik_results.mot"
-freemocap_path = path_to_recording / "validation" / "mediapipe_dlc" / "mediapipe_dlc_ik_results.mot"
+freemocap_path = path_to_recording / "validation" / "mediapipe" / "mediapipe_dlc_ik_results.mot"
+np
 # fmc_blender = pd.read_csv(fmc_blender_path)
 HEADER_ROWS  = 10
 qual = load_mot(qual_path, HEADER_ROWS)
-fmc = load_mot(freemocap_path, HEADER_ROWS)
+# fmc = load_mot(freemocap_path, HEADER_ROWS)
 
 import matplotlib.pyplot as plt
-ankle_flexion = ankle_angles[:, 1]  # flexion/extension is θ_z from Z–X–Y sequence
+ankle_x_rad = np.unwrap(np.radians(ankle_angles[:, 1]))
+ankle_flexion = np.degrees(ankle_x_rad)
+
 
 def center_on_window(x, win):
     x = np.asarray(x)
