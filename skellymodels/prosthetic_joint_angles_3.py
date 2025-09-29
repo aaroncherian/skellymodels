@@ -4,10 +4,32 @@ from skellymodels.models.trajectory import Trajectory
 from pathlib import Path
 from scipy.spatial.transform import Rotation as R
 
+def subtract_neutral(angles:np.ndarray, neutral_frames:range) -> np.ndarray:
+    neutral_mean = np.mean(angles[neutral_frames], axis=0)
+    return angles - neutral_mean
+
 def norm(v, eps=1e-12):
     n = np.linalg.norm(v, axis=1, keepdims=True)
     n = np.maximum(n, eps)
     return v / n
+
+def get_thigh_coordinate_system(joints:Trajectory):
+    num_frames = joints.as_array.shape[0]
+    left_hip = joints.as_dict['left_hip']
+    right_hip = joints.as_dict['right_hip']
+    knee = joints.as_dict['right_knee']
+
+    hip_ml = norm(left_hip - right_hip)
+    zhat = norm(knee - right_hip)
+    yhat = norm(np.cross(zhat, hip_ml))
+    xhat = norm(np.cross(yhat, zhat))
+
+    R_thigh = np.zeros((num_frames, 3, 3))
+    R_thigh[:,:,0] = xhat
+    R_thigh[:,:,1] = yhat
+    R_thigh[:,:,2] = zhat
+
+    return R_thigh
 
 def get_shank_coordinate_system(joints:Trajectory):
     num_frames = joints.as_array.shape[0]
@@ -37,16 +59,17 @@ def get_foot_coordinate_system(joints:Trajectory):
     y = toe - heel
     y_hat = norm(y)
 
+    # Gram-Schmidt to get orthogonal x axis
     b = toe - ankle
     by = np.sum(b * y_hat, axis=1, keepdims=True)
     proj = by * y_hat
-
     x_raw = b - proj
     small = np.linalg.norm(x_raw, axis=1, keepdims=True) < 1e-9
     if np.any(small):
         g = np.tile(np.array([[1.0, 0.0, 0.0]]), (num_frames,1))
         g_proj = g - np.sum(g * y_hat, axis=1, keepdims=True) * y_hat
         x_raw[small[:,0]] = g_proj[small[:,0]]
+    
     x_hat = norm(x_raw)
 
     z_hat = norm(np.cross(x_hat, y_hat))
@@ -59,26 +82,36 @@ def get_foot_coordinate_system(joints:Trajectory):
 
     return R_foot
 
-def calculate_ankle_angles(human:Human, use_nonrigid = False):
+def calculate_cardan_angles(R_proximal:np.ndarray,
+                            R_distal: np.ndarray):
+    
+    num_frames = R_proximal.shape[0]
+    R_rel = np.empty_like(R_proximal)
+    for i in range(num_frames):
+        R_rel[i] = R_proximal[i].T @ R_distal[i]
+    
+    r = R.from_matrix(R_rel)
+    cardan_angles = r.as_euler('ZXY', degrees=True) # Cardan sequence: Z (abduction/adduction), X (dorsiflexion/plantarflexion), Y (inversion/eversio)
+
+    return cardan_angles
+
+def calculate_ankle_angles(human:Human, neutral_stance_frames:range, use_nonrigid = False, ) -> np.ndarray:
     if use_nonrigid:
         joints = human.body.xyz
     else:
         joints = human.body.rigid_xyz
-    num_frames = joints.as_array.shape[0]
 
     R_shank = get_shank_coordinate_system(joints)
     R_foot = get_foot_coordinate_system(joints)
 
-    ankle_angles = np.zeros((num_frames, 3))
+    ankle_angles = calculate_cardan_angles(
+        R_proximal=R_shank,
+        R_distal=R_foot
+    )
 
-    R_rel = np.empty_like(R_shank)
-    for i in range(num_frames):
-        R_rel[i] = R_shank[i].T @ R_foot[i]
+    ankle_angles_neutral = subtract_neutral(ankle_angles, neutral_frames=neutral_stance_frames)
 
-    r = R.from_matrix(R_rel)
-    ankle_angles = r.as_euler('ZXY', degrees=True)
-
-    return ankle_angles  # (num_frames, 3) in degrees, columns are [theta_z, theta_x, theta_y]
+    return ankle_angles_neutral
 
 
 if __name__ == "__main__":
@@ -106,11 +139,11 @@ if __name__ == "__main__":
     frame_range = range(3700,4300)   
 
     human:Human = Human.from_data(path_to_freemocap_parquet)
-    ankle_angles = subtract_neutral(calculate_ankle_angles(human), neutral_frames)
+    ankle_angles = calculate_ankle_angles(human, neutral_frames)
 
     qualisys_human = Human.from_data(path_to_recording/'validation'/'qualisys')
     qualisys_human.calculate()    
-    qualisys_ankle_angles = subtract_neutral(calculate_ankle_angles(qualisys_human, use_nonrigid = True), neutral_frames)
+    qualisys_ankle_angles = calculate_ankle_angles(qualisys_human, neutral_frames, use_nonrigid = True)
     gait_events = pd.read_csv(path_to_gait_events)
     
     mask = (
@@ -133,6 +166,8 @@ if __name__ == "__main__":
 
     mean_qualisys_ankle_angle_cycle = np.mean(qualisys_ankle_angle_cycles, axis=0)
 
+    f = 2
+
 
 
     plt.figure(figsize = (10,4))
@@ -147,7 +182,7 @@ if __name__ == "__main__":
     plt.gca().set_ylim(-25, 50)
     plt.gca().set_xlim(0, 100)
     plt.show()
-    # f = 2 
+    f = 2 
     # def load_mot(path: Path, n_header: int) -> pd.DataFrame:
     #     df = pd.read_csv(
     #         path,
