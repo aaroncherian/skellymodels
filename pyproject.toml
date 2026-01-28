@@ -28,7 +28,6 @@ dependencies = [
     "pydantic==2.7.*",
     "pyyaml==6.0.*",
     "pandas==2.1.*",
-    "ipykernel==6.29.*",
     "pyarrow==19.0.*"
 ]
 
