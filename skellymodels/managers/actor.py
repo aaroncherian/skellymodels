@@ -224,7 +224,7 @@ class Actor(ABC):
         path_to_output_folder = Path.cwd() if path_to_output_folder is None else Path(path_to_output_folder)
         return path_to_output_folder
 
-    def save_out_numpy_data(self, path_to_output_folder: Path|str|None = None):
+    def save_out_numpy_data(self, path_to_output_folder: Path|str|None = None, prefix: str | None = None):
         """
         Saves out a .npy file for each Trajectory in each Aspect with format {tracker_type}_{aspect}_{trajectory} 
         (i.e. 'mediapipe_body_3d_xyz')
@@ -232,36 +232,43 @@ class Actor(ABC):
         path_to_output_folder = self._set_output_folder(path_to_output_folder)
 
         for aspect in self.aspects.values():
+            if prefix is None:
+                prefix = aspect.metadata['tracker_type']
             for trajectory in aspect.trajectories.values():
-                save_path = path_to_output_folder / f"{aspect.metadata['tracker_type']}_{aspect.name}_{trajectory.name}.npy"
+                save_path = path_to_output_folder / f"{prefix}_{aspect.name}_{trajectory.name}.npy"
                 np.save(save_path,
                         trajectory.as_array) 
                 logger.info(f"Saved out {save_path}")
 
-    def save_out_csv_data(self, path_to_output_folder: Path|str|None = None):
+    def save_out_csv_data(self, path_to_output_folder: Path|str|None = None, prefix: str | None = None):
         """
         Saves out a .csv file for each Trajectory in each Aspect with format {tracker_type}_{aspect}_{trajectory} 
         (i.e. 'mediapipe_body_3d_xyz')
         """
         path_to_output_folder = self._set_output_folder(path_to_output_folder)
 
+
         for aspect in self.aspects.values():
+            if prefix is None:
+                prefix = aspect.metadata['tracker_type']
             for trajectory in aspect.trajectories.values():
-                save_path = path_to_output_folder / f"{aspect.metadata['tracker_type']}_{aspect.name}_{trajectory.name}.csv"
-                trajectory.as_dataframe.to_csv(path_to_output_folder/f"{aspect.metadata['tracker_type']}_{aspect.name}_{trajectory.name}.csv", index = False)
+                save_path = path_to_output_folder / f"{prefix}_{aspect.name}_{trajectory.name}.csv"
+                trajectory.as_dataframe.to_csv(save_path, index = False)
                 logger.info(f"Saved out {save_path}") 
 
-    def save_out_all_data_csv(self, path_to_output_folder: Path|str|None = None):
+    def save_out_all_data_csv(self, path_to_output_folder: Path|str|None = None, prefix: str | None = None):
         """
         Saves out a CSV in tidy format with all Trajectories from all Aspects
         """
         path_to_output_folder = self._set_output_folder(path_to_output_folder)
-
-        save_path = path_to_output_folder / 'freemocap_data_by_frame.csv'    
+        if prefix is None:
+            save_path = path_to_output_folder / 'freemocap_data_by_frame.csv'  
+        else:
+            save_path = path_to_output_folder / f"{prefix}_freemocap_data_by_frame.csv"  
         self.create_summary_dataframe().to_csv(save_path, index=False)
         logger.info(f"CSV successfully saved to {save_path}")
 
-    def save_out_all_data_parquet(self, path_to_output_folder: Path|str|None = None):
+    def save_out_all_data_parquet(self, path_to_output_folder: Path|str|None = None, prefix: str | None = None):
         """
         Saves out a Parquet file using the same dataframe created in `create_summary_dataframe` and 
         adds additional metadata to the file.
@@ -269,19 +276,24 @@ class Actor(ABC):
         path_to_output_folder = self._set_output_folder(path_to_output_folder)
 
         dataframe = self.create_summary_dataframe_with_metadata()
-        save_path = path_to_output_folder / FREEMOCAP_PARQUET_NAME
+        if prefix:
+            file_name = f"{prefix}_{FREEMOCAP_PARQUET_NAME}"
+        else:
+            file_name = FREEMOCAP_PARQUET_NAME
+        save_path = path_to_output_folder / file_name
         dataframe.to_parquet(save_path)
         logger.info(f"Parquet successfully saved to {save_path}")
 
-    def save_out_all_xyz_numpy_data(self, path_to_output_folder: Path|str|None = None):
+    def save_out_all_xyz_numpy_data(self, path_to_output_folder: Path|str|None = None, prefix: str | None = None):
         """
         Saves out a single .npy file with all xyz trajectories from all aspects
         """
         path_to_output_folder = self._set_output_folder(path_to_output_folder)
 
         all_xyz_data = np.concatenate([self.aspects[aspect_name].xyz.as_array for aspect_name in self.aspect_order], axis = 1)
-
-        save_path = path_to_output_folder/f"{self.tracker}_skeleton_3d.npy"
+        if prefix is None:
+            prefix = self.tracker
+        save_path = path_to_output_folder/f"{prefix}_skeleton_3d.npy"
         np.save(save_path, all_xyz_data)
         logger.info(f"Combined marker position numpy array saved to f{save_path}")
         f = 2
