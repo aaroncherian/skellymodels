@@ -109,4 +109,8 @@ def MediapipeModelInfo():
 def RTMPoseModelInfo():
     return ModelInfo.from_config_path(config_path = Path(__file__).parents[1]/'tracker_info'/'rtmpose_model_info.yaml')
 
-f = 2
+def ViTPoseWholeBodyModelInfo():
+    return ModelInfo.from_config_path(config_path = Path(__file__).parents[1]/'tracker_info'/'vitpose_wholebody_model_info.yaml')
+
+def ViTPose25ModelInfo():
+    return ModelInfo.from_config_path(config_path = Path(__file__).parents[1]/'tracker_info'/'vitpose_25_model.yaml')
